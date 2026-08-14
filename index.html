@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARRONE INVENTORY MANAGEMENT — VK CONTROLS</title>
+    <title>ARRONE INVENTORY MANAGEMENT — VK CONTRROL</title>
     <style>
         :root {
-            --primary: #0f172a;
+            --primary: #1D1E20;
             --accent: #2563eb;
-            --accent-purple: #673de6;
+            --accent-purple: #673DE6;
             --accent-hover: #1d4ed8;
             --sidebar-bg: #ffffff;
             --sidebar-hover: #f1f5f9;
@@ -51,7 +51,7 @@
 
         .login-card h2 { 
             margin: 0; font-size: 24px; letter-spacing: 0.5px;
-            background: linear-gradient(135deg, #2563eb, #673de6);
+            background: linear-gradient(135deg, #2563eb, #673DE6);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;
         }
         
@@ -71,7 +71,7 @@
 
         .sidebar-brand { padding: 16px 20px; font-weight: bold; font-size: 16px; border-bottom: 1px solid var(--border); }
         .sidebar-brand .brand-title {
-            background: linear-gradient(135deg, #2563eb, #673de6);
+            background: linear-gradient(135deg, #2563eb, #673DE6);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 18px;
         }
         .sidebar-brand small { display: block; font-size: 10px; color: #059669; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
@@ -98,7 +98,7 @@
 
         .venue-title { font-size: 18px; font-weight: 800; color: var(--primary); }
         .brand-highlight { color: #2563eb; }
-        .powered-by { color: #673de6; font-weight: 700; }
+        .powered-by { color: #673DE6; font-weight: 700; }
 
         .content-body { flex: 1; padding: 24px; overflow-y: auto; }
 
@@ -125,7 +125,7 @@
         .breadcrumb span:hover { text-decoration: underline; }
 
         .master-toolbar {
-            display: flex; gap: 8px; margin-bottom: 15px; background: #f1f5f9; padding: 10px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;
+            display: flex; gap: 8px; margin-bottom: 15px; background: #f1f5f9; padding: 10px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap; align-items: center; justify-content: space-between;
         }
 
         .master-tab-btn {
@@ -157,6 +157,7 @@
         .btn-success { background-color: var(--success); }
         .btn-warning { background-color: var(--warning); }
         .btn-danger { background-color: var(--danger); }
+        .btn-save { background-color: #059669; color: white; font-weight: bold; }
         .status-ok { color: var(--success); font-weight: bold; }
         .status-warn { color: var(--danger); font-weight: bold; }
 
@@ -164,18 +165,13 @@
             background-color: #f1f5f9; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; font-size: 14px;
         }
 
-        /* BCG MENU ENGINEERING MATRIX QUADRANTS */
-        .bcg-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; height: 320px;
+        .doc-dropzone {
+            border: 2px dashed var(--accent); border-radius: 8px; padding: 25px; text-align: center; background: #f8fafc; cursor: pointer; margin-bottom: 15px; transition: background 0.2s;
         }
-        .bcg-box {
-            border-radius: 8px; padding: 15px; border: 2px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;
+        .doc-dropzone:hover { background: #eff6ff; }
+        .doc-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; background: #fff; font-size: 13px;
         }
-        .bcg-star { background-color: #dcfce7; border-color: #16a34a; }
-        .bcg-plowhorse { background-color: #fef3c7; border-color: #d97706; }
-        .bcg-puzzle { background-color: #e0f2fe; border-color: #0284c7; }
-        .bcg-dog { background-color: #fee2e2; border-color: #dc2626; }
-        .bcg-title { font-weight: bold; font-size: 14px; text-transform: uppercase; }
 
         @media print {
             @page { size: A4 landscape; margin: 10mm; }
@@ -191,7 +187,7 @@
     <div id="loginOverlay">
         <div class="login-card">
             <h2>ARRONE INVENTORY</h2>
-            <small>VK CONTROLS</small>
+            <small>VK CONTRROL</small>
             
             <form onsubmit="handleLogin(event)">
                 <label>User ID</label>
@@ -212,7 +208,7 @@
             <div class="sidebar-brand">
                 <div>
                     <span class="brand-title">ARRONE INVENTORY</span>
-                    <small>VK CONTROLS</small>
+                    <small>VK CONTRROL</small>
                 </div>
             </div>
 
@@ -228,18 +224,15 @@
                 <div id="reportsSub" class="nav-sub-items" style="display: block;">
                     <div class="nav-sub-item" onclick="switchSection('itemwiseReport', this)">Itemwise Costing Report</div>
                     <div class="nav-sub-item" onclick="switchSection('bcgMatrix', this)">Menu Engineering Matrix (BCG)</div>
-                    <div class="nav-sub-item" onclick="switchSection('idealActual', this)">Ideal vs Actual Detailed Report</div>
-                    <div class="nav-sub-item" onclick="switchSection('stiSales', this)">STI vs Sales Report</div>
                 </div>
 
                 <div class="nav-item" onclick="toggleSubNav('costingSub')">
                     <span>🍳 Costing & Recipes</span>
                     <small>▼</small>
                 </div>
-                <div id="costingSub" class="nav-sub-items">
+                <div id="costingSub" class="nav-sub-items" style="display: block;">
                     <div class="nav-sub-item" onclick="switchSection('food', this)">Kitchen Food Calculator</div>
-                    <div class="nav-sub-item" onclick="switchSection('cocktail', this)">Cocktails & Spirits</div>
-                    <div class="nav-sub-item" onclick="switchSection('mocktail', this)">Mocktails & NAB</div>
+                    <div class="nav-sub-item" onclick="switchSection('docVault', this)">📎 Attached Documents Vault</div>
                 </div>
 
                 <div class="nav-item" onclick="toggleSubNav('mastersSub')">
@@ -247,7 +240,7 @@
                     <small>▼</small>
                 </div>
                 <div id="mastersSub" class="nav-sub-items" style="display: block;">
-                    <div class="nav-sub-item" onclick="isolateMaster('secGlobalPosList')">Global POS Item List</div>
+                    <div class="nav-sub-item" onclick="isolateMaster('secGlobalPosList')">Global POS Item Master</div>
                     <div class="nav-sub-item" onclick="isolateMaster('secItemMaster')">Item Master</div>
                     <div class="nav-sub-item" onclick="isolateMaster('secSubRecipeMaster')">Sub-Recipe Master</div>
                     <div class="nav-sub-item" onclick="isolateMaster('secMainRecipeMaster')">Recipe Master Builder</div>
@@ -264,10 +257,11 @@
             
             <div class="top-header">
                 <div class="venue-title">
-                    <span class="brand-highlight">VK CONTROLS</span> — <span class="powered-by">ARRONE INVENTORY MANAGEMENT SYSTEM</span>
+                    <span class="brand-highlight">VK CONTRROL</span> — <span class="powered-by">ARRONE INVENTORY MANAGEMENT SYSTEM</span>
                 </div>
 
-                <div style="display: flex; gap: 15px; align-items: center; font-size: 13px;">
+                <div style="display: flex; gap: 12px; align-items: center; font-size: 13px;">
+                    <button class="btn-action btn-save" onclick="saveAllToStorage(true)">💾 Save All Masters</button>
                     <div>User: <strong id="currentUsername">Vasudevan (Admin)</strong> <span class="badge" id="currentUserRole">ADMIN</span></div>
                     <button class="btn-action" style="background-color: var(--danger); padding: 4px 10px; font-size: 11px;" onclick="logout()">Logout</button>
                 </div>
@@ -364,54 +358,50 @@
                                 <tr><th>Classification</th><th>Menu Group</th><th>Item / Dish Name</th><th>Number Sold</th><th>Item Sell Rate</th><th>Item Cost</th><th>Total Revenue</th><th>Total Cost</th><th>Total Profit</th><th>Cost %</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td>Food</td><td>PARTY FOOD MENU</td><td>Chicken Butter Masala</td><td>40</td><td>₹ 450.00</td><td>₹ 112.50</td><td>₹ 18,000.00</td><td>₹ 4,500.00</td><td>₹ 13,500.00</td><td class="status-ok">25.0%</td></tr>
+                                <tr><td>Food</td><td>PARTY FOOD MENU</td><td>Butter Chicken Masala</td><td>40</td><td>₹ 450.00</td><td>₹ 97.66</td><td>₹ 18,000.00</td><td>₹ 3,906.40</td><td>₹ 14,093.60</td><td class="status-ok">21.7%</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div id="secBcgMatrix" class="section-block" style="display: none;">
+                <div id="secDocVault" class="section-block" style="display: none;">
                     <div class="card">
-                        <h2>MENU ENGINEERING MATRIX (BCG CLASSIFICATION)</h2>
-                        <div class="bcg-grid">
-                            <div class="bcg-box bcg-star">
-                                <div class="bcg-title">🌟 STAR (High Profit, High Popularity)</div>
-                                <div style="font-size: 12px; margin-top: 6px;">• Chicken Butter Masala (40 Sold)</div>
-                            </div>
-                            <div class="bcg-box bcg-plowhorse">
-                                <div class="bcg-title">🐎 WORK HORSE (Low Profit, High Popularity)</div>
-                                <div style="font-size: 12px; margin-top: 6px;">• Mutton Rogan Josh (20 Sold)</div>
-                            </div>
+                        <h2>
+                            <span>📎 Costing & Recipe Supporting Documents Vault</span>
+                            <small style="color:var(--text-muted); font-size: 11px;">(Files are converted to Base64 and stored in browser memory)</small>
+                        </h2>
+                        <p style="font-size: 12px; color: var(--text-muted);">Upload spec sheets, supplier rate cards, food costing PDFs, or spreadsheets. Files persist across reloads and are available for download.</p>
+                        
+                        <div class="doc-dropzone" onclick="document.getElementById('fileUploadInput').click()">
+                            📁 <strong>Click here to upload costing documents (PDF, Excel, Images, CSV)</strong><br>
+                            <small style="color: #64748b;">Max file size: 5MB per document</small>
+                            <input type="file" id="fileUploadInput" style="display:none" onchange="handleDocumentUpload(event)" multiple>
                         </div>
+
+                        <div id="uploadedDocsList"></div>
                     </div>
-                </div>
-
-                <div id="secIdealActual" class="section-block" style="display: none;">
-                    <div class="card"><h2>IDEAL VS ACTUAL DETAILED REPORT</h2></div>
-                </div>
-
-                <div id="secStiSales" class="section-block" style="display: none;">
-                    <div class="card"><h2>STI VS SALES REPORT</h2></div>
                 </div>
 
                 <div id="secMasters" class="section-block" style="display: none;">
                     
                     <div class="master-toolbar">
-                        <button class="master-tab-btn active" onclick="isolateMaster('ALL')">📦 All Masters</button>
-                        <button class="master-tab-btn" onclick="isolateMaster('secGlobalPosList')">Global POS List</button>
-                        <button class="master-tab-btn" onclick="isolateMaster('secItemMaster')">1. Item Master</button>
-                        <button class="master-tab-btn" onclick="isolateMaster('secSubRecipeMaster')">2. Sub-Recipe Master</button>
-                        <button class="master-tab-btn" onclick="isolateMaster('secMainRecipeMaster')">3. Recipe Builder</button>
-                        <button class="master-tab-btn" onclick="isolateMaster('secMenuMaster')">4. POS Menu Master</button>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="master-tab-btn active" onclick="isolateMaster('ALL')">📦 All Masters</button>
+                            <button class="master-tab-btn" onclick="isolateMaster('secGlobalPosList')">Global POS Master</button>
+                            <button class="master-tab-btn" onclick="isolateMaster('secItemMaster')">1. Item Master</button>
+                            <button class="master-tab-btn" onclick="isolateMaster('secSubRecipeMaster')">2. Sub-Recipe Master</button>
+                            <button class="master-tab-btn" onclick="isolateMaster('secMainRecipeMaster')">3. Recipe Master Builder</button>
+                            <button class="master-tab-btn" onclick="isolateMaster('secMenuMaster')">4. POS Menu Master</button>
+                        </div>
+                        <button class="btn-action btn-save" onclick="saveAllToStorage(true)">💾 Save All Changes</button>
                     </div>
 
                     <div id="secGlobalPosList" class="card master-card">
-                        <h2>GLOBAL POS ITEM LIST</h2>
+                        <h2>GLOBAL POS ITEM MASTER (Linked with POS Menu Master)</h2>
                         <table>
-                            <thead><tr><th>POS Code</th><th>Item Name</th><th>Classification</th><th>Menu Group</th><th>Rate</th><th>Status</th></tr></thead>
-                            <tbody>
-                                <tr><td>1192</td><td>KADAI PANEER</td><td>Food</td><td>PARTY FOOD MENU</td><td>₹ 380.00</td><td><span class="badge" style="background:#dcfce7; color:#166534;">ACTIVE</span></td></tr>
-                            </tbody>
+                            <thead><tr><th>POS Code</th><th>Item Name</th><th>Classification</th><th>Menu Group</th><th>Selling Rate</th><th>Status</th></tr></thead>
+                            <tbody id="tbodyGlobalPos">
+                                </tbody>
                         </table>
                     </div>
 
@@ -436,73 +426,76 @@
                                     <option value="SEAFOOD">SEAFOOD</option>
                                     <option value="VEGETABLES">VEGETABLES</option>
                                     <option value="DAIRY">DAIRY</option>
+                                    <option value="GROCERY">GROCERY</option>
                                     <option value="LIQUOR">LIQUOR</option>
                                 </select>
-                                <input type="text" id="addPurUom" placeholder="Purchase UOM" style="flex: 1; min-width: 90px;">
-                                <input type="text" id="addRecUom" placeholder="Recipe UOM" style="flex: 1; min-width: 90px;">
-                                <input type="number" id="addConv" placeholder="Conversion" style="flex: 1; min-width: 90px;">
-                                <input type="number" id="addRate" placeholder="Rate (₹)" style="flex: 1; min-width: 90px;">
-                                <input type="number" id="addYield" placeholder="Yield %" style="flex: 1; min-width: 80px;">
+                                <input type="text" id="addPurUom" placeholder="Purchase UOM (Kg)" style="flex: 1; min-width: 90px;">
+                                <input type="text" id="addRecUom" placeholder="Recipe UOM (Grams)" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addConv" placeholder="Conversion (1000)" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addRate" placeholder="Purchase Rate (₹)" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addYield" placeholder="Yield % (e.g. 75)" style="flex: 1; min-width: 80px;">
                                 <button class="btn-action btn-success" onclick="executeAddItemMaster()">+ Add Item</button>
                             </div>
                         </div>
 
                         <table id="tblItemMaster">
                             <thead>
-                                <tr><th>Code</th><th>Name</th><th>Category</th><th>Purchase UOM</th><th>Recipe UOM</th><th>Conversion</th><th>Base Rate</th><th>Yield %</th><th>Yield Cost</th><th>Recipe Unit Cost</th><th>Actions</th></tr>
+                                <tr><th>Code</th><th>Name</th><th>Category</th><th>Purchase UOM</th><th>Recipe UOM</th><th>Conversion</th><th>Base Rate (₹)</th><th>Yield %</th><th>Yield Cost (₹)</th><th>Recipe Unit Cost (₹)</th><th>Actions</th></tr>
                             </thead>
                             <tbody id="tbodyItemMaster"></tbody>
                         </table>
                     </div>
 
                     <div id="secSubRecipeMaster" class="card master-card">
-                        <h2>2. Sub-Recipe Master (Prep Batches & Yield %)</h2>
+                        <h2>2. Sub-Recipe Master (In-House Prep Batches & Yield %)</h2>
                         <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
                             <div style="display: flex; gap: 10px;">
-                                <input type="text" id="subPrepName" placeholder="Prep Name" style="flex: 2;">
+                                <input type="text" id="subPrepName" placeholder="Prep Name (e.g. Cleaned Chicken Prep)" style="flex: 2;">
                                 <select id="subRawItem" style="flex: 2;"></select>
                                 <input type="number" id="subRawQty" placeholder="Raw Qty (Kg)" style="flex: 1;">
-                                <input type="number" id="subYieldPct" placeholder="Yield %" style="flex: 1;">
+                                <input type="number" id="subYieldPct" placeholder="Yield % (e.g. 75)" style="flex: 1;">
                                 <button class="btn-action btn-success" onclick="executeAddSubRecipe()">+ Create Sub-Recipe</button>
                             </div>
                         </div>
                         <table>
-                            <thead><tr><th>Batch Name</th><th>Source Item</th><th>Raw Qty</th><th>Yield Qty</th><th>Yield %</th><th>Batch Cost</th></tr></thead>
+                            <thead><tr><th>Batch Name</th><th>Source Item</th><th>Raw Qty</th><th>Yield Qty</th><th>Yield %</th><th>Batch Cost (₹)</th><th>Actions</th></tr></thead>
                             <tbody id="tbodySubRecipe"></tbody>
                         </table>
                     </div>
 
                     <div id="secMainRecipeMaster" class="card master-card">
-                        <h2>3. Recipe Master Builder (Interlinked to POS Menu SKUs)</h2>
+                        <h2>3. Recipe Master Builder (Directly Calculates Final Dish Cost)</h2>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <select id="recipePosSelect" style="flex: 2;"></select>
-                                <select id="recipeClassSelect" style="flex: 1;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <select id="recipePosSelect" style="flex: 2; min-width: 180px;"></select>
+                                <select id="recipeClassSelect" style="flex: 1; min-width: 110px;">
                                     <option value="Food">Food</option>
                                     <option value="Liquor">Liquor</option>
+                                    <option value="Soft Drinks">Soft Drinks</option>
+                                    <option value="Brew Beer">Brew Beer</option>
                                 </select>
-                                <input type="text" id="recipeUomSelect" placeholder="UOM" value="SET" style="flex: 1;">
-                                <input type="number" id="recipePortionCount" placeholder="Portions" value="1" style="flex: 1;">
+                                <input type="text" id="recipeUomSelect" placeholder="UOM (Grm/Set/Kg/ML/Por)" value="Grams" style="flex: 1; min-width: 100px;">
+                                <input type="number" id="recipePortionCount" placeholder="Portions" value="1" style="flex: 1; min-width: 90px;">
                             </div>
-                            <div style="display: flex; gap: 10px;">
-                                <select id="recipeIngType" style="flex: 1;" onchange="updateRecipeIngredientDropdown()">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <select id="recipeIngType" style="flex: 1; min-width: 120px;" onchange="updateRecipeIngredientDropdown()">
                                     <option value="RAW">Raw Item</option>
                                     <option value="SUB">Sub-Recipe</option>
                                 </select>
-                                <select id="recipeIngSelect" style="flex: 2;"></select>
-                                <input type="number" id="recipeIngQty" placeholder="Qty (Recipe UOM)" style="flex: 1;">
+                                <select id="recipeIngSelect" style="flex: 2; min-width: 180px;"></select>
+                                <input type="number" id="recipeIngQty" placeholder="Qty (e.g. 200 Grams)" style="flex: 1; min-width: 110px;">
                                 <button class="btn-action btn-success" onclick="executeAddRecipeIngredient()">+ Add Component</button>
                             </div>
                         </div>
                         <table>
-                            <thead><tr><th>POS Menu SKU</th><th>Selling Price</th><th>Ingredients Breakdown</th><th>Portions</th><th>Calculated Cost</th><th>Cost %</th></tr></thead>
+                            <thead><tr><th>POS Menu SKU</th><th>Selling Price</th><th>Ingredients Breakdown</th><th>Portions</th><th>Calculated Final Cost</th><th>Cost %</th><th>Actions</th></tr></thead>
                             <tbody id="tbodyMainRecipe"></tbody>
                         </table>
                     </div>
 
                     <div id="secMenuMaster" class="card master-card">
                         <h2>
-                            <span>4. POS Menu Master (POS Code, Name, Price & Software Import)</span>
+                            <span>4. POS Menu Master (Linked with Global POS Master)</span>
                             <div>
                                 <input type="file" id="importPosCsv" accept=".csv" style="display:none" onchange="handlePosCsvImport(event)">
                                 <button class="btn-action btn-warning" onclick="document.getElementById('importPosCsv').click()">📥 Import POS CSV</button>
@@ -510,15 +503,17 @@
                             </div>
                         </h2>
                         <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
-                            <div style="display: flex; gap: 10px;">
-                                <input type="text" id="menuCode" placeholder="POS Code" style="flex: 1;">
-                                <input type="text" id="menuName" placeholder="POS Selling Item Name" style="flex: 2;">
-                                <select id="menuCat" style="flex: 1.5;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <input type="text" id="menuCode" placeholder="POS Code" style="flex: 1; min-width: 100px;">
+                                <input type="text" id="menuName" placeholder="POS Selling Item Name" style="flex: 2; min-width: 150px;">
+                                <select id="menuCat" style="flex: 1.5; min-width: 110px;">
                                     <option value="FOOD">FOOD</option>
                                     <option value="LIQUOR">LIQUOR</option>
                                     <option value="NAB">NAB</option>
+                                    <option value="BREWERY">BREWERY</option>
+                                    <option value="TOBACCO">TOBACCO</option>
                                 </select>
-                                <input type="number" id="menuPrice" placeholder="Price (₹)" style="flex: 1;">
+                                <input type="number" id="menuPrice" placeholder="Price (₹)" style="flex: 1; min-width: 100px;">
                                 <button class="btn-action btn-success" onclick="executeAddMenuMaster()">+ Add Menu SKU</button>
                             </div>
                         </div>
@@ -528,17 +523,6 @@
                         </table>
                     </div>
 
-                </div>
-
-                <div id="secSales" class="section-block" style="display: none;">
-                    <div class="card">
-                        <h2>POS Sales Ingestion & Automatic Deconstruction</h2>
-                        <div style="display: flex; gap: 15px;">
-                            <select id="salesPosItem" style="flex: 2;"></select>
-                            <input type="number" id="salesQty" value="25" class="text-input" style="flex: 1;">
-                            <button class="btn-action btn-success" style="flex: 1;" onclick="processDeconstruction()">Deconstruct Bill</button>
-                        </div>
-                    </div>
                 </div>
 
                 <div id="secFood" class="section-block" style="display: none;">
@@ -552,27 +536,40 @@
                     </div>
                 </div>
 
-                <div id="secCocktail" class="section-block" style="display: none;">
-                    <div class="card"><h2>Cocktail & Spirits Costing Calculator</h2></div>
-                </div>
-
-                <div id="secMocktail" class="section-block" style="display: none;">
-                    <div class="card"><h2>Mocktail & NAB Costing Calculator</h2></div>
-                </div>
-
-                <div id="secAudit" class="section-block" style="display: none;">
-                    <div class="card"><h2>ARRONE Bar Stock Variance Audit Sheet</h2></div>
-                </div>
-
                 <div id="secSettings" class="section-block" style="display: none;">
+                    
                     <div class="card">
-                        <h2>⚙️ User Management & Password Control</h2>
+                        <h2>🔐 Change Account Password</h2>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 12px; font-weight: bold;">Current Password</label>
+                                    <input type="password" id="currPasswordInput" class="text-input" placeholder="••••••••">
+                                </div>
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 12px; font-weight: bold;">New Password</label>
+                                    <input type="password" id="newPasswordInput" class="text-input" placeholder="••••••••">
+                                </div>
+                                <div style="flex: 1; min-width: 150px;">
+                                    <label style="font-size: 12px; font-weight: bold;">Confirm Password</label>
+                                    <input type="password" id="confirmPasswordInput" class="text-input" placeholder="••••••••">
+                                </div>
+                                <div style="flex: 0.8; min-width: 130px; display: flex; align-items: flex-end;">
+                                    <button class="btn-action btn-success" style="width: 100%;" onclick="changeUserPassword()">Update Password</button>
+                                </div>
+                            </div>
+                            <div id="pwdMsg" style="font-size: 12px; margin-top: 8px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>⚙️ User Management & Role Control</h2>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
-                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                                <input type="text" id="settingUserId" placeholder="User ID" style="flex: 1;">
-                                <input type="text" id="settingFullName" placeholder="Full Name" style="flex: 1.5;">
-                                <input type="password" id="settingPassword" placeholder="Password" style="flex: 1;">
-                                <select id="settingRole" style="flex: 1;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <input type="text" id="settingUserId" placeholder="User ID (e.g. chef_ramesh)" style="flex: 1; min-width: 120px;">
+                                <input type="text" id="settingFullName" placeholder="Full Name" style="flex: 1.5; min-width: 150px;">
+                                <input type="password" id="settingPassword" placeholder="Initial Password" style="flex: 1; min-width: 120px;">
+                                <select id="settingRole" style="flex: 1; min-width: 110px;">
                                     <option value="ADMIN">ADMIN</option>
                                     <option value="CHEF">CHEF</option>
                                     <option value="BARTENDER">BARTENDER</option>
@@ -585,6 +582,13 @@
                             <tbody id="usersListTbody"></tbody>
                         </table>
                     </div>
+
+                    <div class="card">
+                        <h2>⚠️ Factory Reset / System Defaults</h2>
+                        <p style="font-size:12px; color:var(--text-muted);">Reset all inventory items, recipes, and credentials to clean default demo data.</p>
+                        <button class="btn-action btn-danger" onclick="resetToFactoryDefaults()">🔄 Reset to System Defaults</button>
+                    </div>
+
                 </div>
 
             </div>
@@ -593,19 +597,27 @@
     </div>
 
     <script>
-        let itemMasterStore = [
+        // DEFAULT DATASETS
+        const DEFAULT_ITEMS = [
             { code: 'CHK-01', name: 'Raw Chicken Whole', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 220.00, yieldPct: 75.0 },
             { code: 'CHK-02', name: 'Chicken Boneless Raw', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 290.00, yieldPct: 95.0 },
-            { code: 'MUT-01', name: 'Raw Mutton Curry Cut', cat: 'MUTTON', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 780.00, yieldPct: 90.0 }
+            { code: 'MUT-01', name: 'Raw Mutton Curry Cut', cat: 'MUTTON', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 780.00, yieldPct: 90.0 },
+            { code: 'VEG-01', name: 'Fresh Tomatoes', cat: 'VEGETABLES', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 40.00, yieldPct: 90.0 },
+            { code: 'DAR-01', name: 'Amul Butter', cat: 'DAIRY', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 540.00, yieldPct: 100.0 },
+            { code: 'GRO-01', name: 'Cooking Oil', cat: 'GROCERY', purUom: 'Litre', recUom: 'ML', conv: 1000, rate: 120.00, yieldPct: 100.0 }
         ];
 
-        let subRecipeStore = [
+        const DEFAULT_SUBS = [
             { code: 'SUB-01', name: 'Cleaned Chicken Prep', source: 'Raw Chicken Whole (CHK-01)', rawQty: 1.0, yieldQty: 0.75, yieldPct: 75.0, cost: 220.00, unitCostGrams: 0.2933 }
         ];
 
-        let posMenuData = {
+        const DEFAULT_POS_MENU = {
             'FOOD': [
-                { code: 'POS-101', name: 'Chicken Butter Masala', cat: 'FOOD', price: 450, sold: 40, cost: 112.50, pct: '25.0%', recipeList: [] }
+                { code: 'POS-101', name: 'Butter Chicken Masala', cat: 'FOOD', price: 450, sold: 40, cost: 97.66, pct: '21.7%', recipeList: [
+                    { ingName: 'Cleaned Chicken Prep', qty: 200, uom: 'Grams', cost: 58.66 },
+                    { ingName: 'Amul Butter', qty: 50, uom: 'Grams', cost: 27.00 },
+                    { ingName: 'Cooking Oil', qty: 10, uom: 'ML', cost: 1.20 }
+                ] }
             ],
             'LIQUOR': [
                 { code: 'BAR-201', name: 'Whiskey Sour Cocktail', cat: 'LIQUOR', price: 550, sold: 28, cost: 92.78, pct: '16.9%', recipeList: [] }
@@ -615,29 +627,78 @@
             ]
         };
 
+        const DEFAULT_USERS = [
+            { id: 'admin', name: 'Vasudevan (Admin)', role: 'ADMIN', pass: 'admin123' },
+            { id: 'chef', name: 'Head Chef Ramesh', role: 'CHEF', pass: 'chef123' },
+            { id: 'bar', name: 'Bar Manager', role: 'BARTENDER', pass: 'bar123' }
+        ];
+
         const itemLedgerData = {
             'CHICKEN': [
                 { code: 'CHK-001', name: 'Chicken Boneless', cat: 'CHICKEN', op: 10.000, pur: 15.000, cl: 5.500, act: 19.500, theo: 18.500, varQty: 1.000, rate: 220, unit: 'Kg' }
             ]
         };
 
-        let appUsers = [
-            { id: 'admin', name: 'Vasudevan (Admin)', role: 'ADMIN', pass: 'admin123' },
-            { id: 'chef', name: 'Head Chef Ramesh', role: 'CHEF', pass: 'chef123' }
-        ];
+        // LOCAL STORAGE STATE INITIALIZATION
+        let itemMasterStore = JSON.parse(localStorage.getItem('arrone_items')) || DEFAULT_ITEMS;
+        let subRecipeStore = JSON.parse(localStorage.getItem('arrone_subs')) || DEFAULT_SUBS;
+        let posMenuData = JSON.parse(localStorage.getItem('arrone_pos_menu')) || DEFAULT_POS_MENU;
+        let appUsers = JSON.parse(localStorage.getItem('arrone_users')) || DEFAULT_USERS;
+        let attachedDocs = JSON.parse(localStorage.getItem('arrone_docs')) || [];
 
         let currentUser = null;
+        let inactivityTimer = null;
+
+        // PERSISTENCE CONTROLLER
+        function saveAllToStorage(showNotice = false) {
+            localStorage.setItem('arrone_items', JSON.stringify(itemMasterStore));
+            localStorage.setItem('arrone_subs', JSON.stringify(subRecipeStore));
+            localStorage.setItem('arrone_pos_menu', JSON.stringify(posMenuData));
+            localStorage.setItem('arrone_users', JSON.stringify(appUsers));
+            localStorage.setItem('arrone_docs', JSON.stringify(attachedDocs));
+
+            if (showNotice) {
+                alert('All Master records and configurations saved to permanent browser storage.');
+            }
+        }
+
+        function resetToFactoryDefaults() {
+            if (confirm('Warning: This will overwrite your current masters with system default data. Proceed?')) {
+                localStorage.clear();
+                itemMasterStore = DEFAULT_ITEMS;
+                subRecipeStore = DEFAULT_SUBS;
+                posMenuData = DEFAULT_POS_MENU;
+                appUsers = DEFAULT_USERS;
+                attachedDocs = [];
+                saveAllToStorage(false);
+                location.reload();
+            }
+        }
+
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            if (currentUser) {
+                inactivityTimer = setTimeout(() => {
+                    alert('Session expired due to 15 minutes of inactivity.');
+                    logout();
+                }, 15 * 60 * 1000);
+            }
+        }
+
+        window.addEventListener('mousemove', resetInactivityTimer);
+        window.addEventListener('keypress', resetInactivityTimer);
 
         window.addEventListener('DOMContentLoaded', () => {
             renderItemMasterTable();
             renderSubRecipeTable();
             renderMenuMasterTable();
+            renderGlobalPosTable();
             renderMainRecipeTable();
             renderUsersList();
             populateSubRecipeDropdowns();
-            populateSalesDropdowns();
-            populateRecipePosDropdown();
+            populateRecipePosDropdowns();
             updateRecipeIngredientDropdown();
+            loadDocumentsFromStorage();
         });
 
         function handleLogin(event) {
@@ -652,6 +713,7 @@
                 document.getElementById('appContainer').style.display = 'flex';
                 document.getElementById('currentUsername').innerText = currentUser.fullName;
                 document.getElementById('currentUserRole').innerText = currentUser.role;
+                resetInactivityTimer();
                 showDashboard();
             } else {
                 document.getElementById('loginError').innerText = 'Invalid User ID or Password.';
@@ -659,6 +721,7 @@
         }
 
         function logout() {
+            clearTimeout(inactivityTimer);
             currentUser = null;
             document.getElementById('appContainer').style.display = 'none';
             document.getElementById('loginOverlay').style.display = 'flex';
@@ -682,15 +745,12 @@
                 'dashboard': 'secDashboard',
                 'itemwiseReport': 'secItemwiseReport',
                 'bcgMatrix': 'secBcgMatrix',
-                'idealActual': 'secIdealActual',
-                'stiSales': 'secStiSales',
                 'masters': 'secMasters',
                 'sales': 'secSales',
                 'food': 'secFood',
-                'cocktail': 'secCocktail',
-                'mocktail': 'secMocktail',
                 'audit': 'secAudit',
-                'settings': 'secSettings'
+                'settings': 'secSettings',
+                'docVault': 'secDocVault'
             };
 
             const targetId = targetMap[secKey];
@@ -724,6 +784,159 @@
             }
         }
 
+        // PASSWORD CHANGE CONTROLLER (SAVES PERSISTENTLY)
+        function changeUserPassword() {
+            const curr = document.getElementById('currPasswordInput').value;
+            const newP = document.getElementById('newPasswordInput').value;
+            const confP = document.getElementById('confirmPasswordInput').value;
+            const msgEl = document.getElementById('pwdMsg');
+
+            if (!currentUser) return;
+
+            const userObj = appUsers.find(u => u.id === currentUser.username);
+
+            if (!userObj || userObj.pass !== curr) {
+                msgEl.style.color = 'var(--danger)';
+                msgEl.innerText = 'Current password is incorrect.';
+                return;
+            }
+
+            if (!newP || newP.length < 4) {
+                msgEl.style.color = 'var(--danger)';
+                msgEl.innerText = 'New password must be at least 4 characters long.';
+                return;
+            }
+
+            if (newP !== confP) {
+                msgEl.style.color = 'var(--danger)';
+                msgEl.innerText = 'New password and confirmation do not match.';
+                return;
+            }
+
+            userObj.pass = newP;
+            saveAllToStorage(false);
+
+            msgEl.style.color = 'var(--success)';
+            msgEl.innerText = `Password for '${userObj.name}' updated successfully!`;
+
+            document.getElementById('currPasswordInput').value = '';
+            document.getElementById('newPasswordInput').value = '';
+            document.getElementById('confirmPasswordInput').value = '';
+        }
+
+        function saveUserPermissions() {
+            const id = document.getElementById('settingUserId').value.trim().toLowerCase();
+            const name = document.getElementById('settingFullName').value.trim();
+            const pass = document.getElementById('settingPassword').value;
+            const role = document.getElementById('settingRole').value;
+
+            if (!id || !name || !pass) return alert('Enter User ID, Full Name, and Initial Password.');
+
+            const existingIndex = appUsers.findIndex(u => u.id === id);
+            if (existingIndex >= 0) {
+                appUsers[existingIndex] = { id, name, role, pass };
+            } else {
+                appUsers.push({ id, name, role, pass });
+            }
+
+            saveAllToStorage(false);
+            renderUsersList();
+
+            document.getElementById('settingUserId').value = '';
+            document.getElementById('settingFullName').value = '';
+            document.getElementById('settingPassword').value = '';
+
+            alert(`User account '${name}' saved successfully!`);
+        }
+
+        function renderUsersList() {
+            const tbody = document.getElementById('usersListTbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            appUsers.forEach((u, i) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${u.id}</strong></td>
+                        <td>${u.name}</td>
+                        <td><span class="badge">${u.role}</span></td>
+                        <td>${u.id === 'admin' ? '<em>Root Administrator</em>' : `<button class="btn-action btn-danger" onclick="deleteUser(${i})">Delete</button>`}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function deleteUser(i) {
+            if (confirm(`Delete user account '${appUsers[i].name}'?`)) {
+                appUsers.splice(i, 1);
+                saveAllToStorage(false);
+                renderUsersList();
+            }
+        }
+
+        // FILE ATTACHMENT WITH BASE64 STORAGE & RETRIEVAL
+        function handleDocumentUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            let loaded = 0;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    attachedDocs.push({
+                        name: file.name,
+                        size: (file.size / 1024).toFixed(1) + ' KB',
+                        type: file.type || 'application/octet-stream',
+                        date: new Date().toLocaleDateString(),
+                        dataUrl: e.target.result
+                    });
+                    loaded++;
+
+                    if (loaded === files.length) {
+                        saveAllToStorage(false);
+                        loadDocumentsFromStorage();
+                        alert(`Successfully stored ${loaded} document(s)!`);
+                    }
+                };
+
+                reader.readAsDataURL(file);
+            }
+            event.target.value = '';
+        }
+
+        function loadDocumentsFromStorage() {
+            const container = document.getElementById('uploadedDocsList');
+            if (!container) return;
+
+            if (attachedDocs.length === 0) {
+                container.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); text-align: center;">No documents attached yet.</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            attachedDocs.forEach((doc, idx) => {
+                container.innerHTML += `
+                    <div class="doc-item">
+                        <div>📄 <strong>${doc.name}</strong> <small style="color:var(--text-muted);">(${doc.size}) - Uploaded ${doc.date}</small></div>
+                        <div style="display: flex; gap: 6px;">
+                            <a href="${doc.dataUrl}" download="${doc.name}" class="btn-action btn-success" style="text-decoration:none; padding:4px 8px; font-size:11px;">⬇️ Download</a>
+                            <button class="btn-action btn-danger" style="padding:4px 8px; font-size:11px;" onclick="removeDocument(${idx})">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function removeDocument(idx) {
+            if (confirm(`Remove document '${attachedDocs[idx].name}'?`)) {
+                attachedDocs.splice(idx, 1);
+                saveAllToStorage(false);
+                loadDocumentsFromStorage();
+            }
+        }
+
+        // 1. ITEM MASTER OPERATIONS
         function executeAddItemMaster() {
             const code = document.getElementById('addCode').value.trim().toUpperCase();
             const name = document.getElementById('addName').value.trim();
@@ -736,7 +949,14 @@
 
             if (!code || !name) return alert('Please fill in Item Code and Description.');
 
-            itemMasterStore.push({ code, name, cat, purUom, recUom, conv, rate, yieldPct });
+            const existingIdx = itemMasterStore.findIndex(i => i.code === code);
+            if (existingIdx >= 0) {
+                itemMasterStore[existingIdx] = { code, name, cat, purUom, recUom, conv, rate, yieldPct };
+            } else {
+                itemMasterStore.push({ code, name, cat, purUom, recUom, conv, rate, yieldPct });
+            }
+
+            saveAllToStorage(false);
             renderItemMasterTable();
             populateSubRecipeDropdowns();
             updateRecipeIngredientDropdown();
@@ -749,17 +969,18 @@
             document.getElementById('addRate').value = '';
             document.getElementById('addYield').value = '';
 
-            alert(`Item '${name}' added to Item Master!`);
+            alert(`Item '${name}' saved to Item Master!`);
         }
 
         function renderItemMasterTable() {
             const tbody = document.getElementById('tbodyItemMaster');
+            if (!tbody) return;
             tbody.innerHTML = '';
             itemMasterStore.forEach((item, index) => {
                 const effRate = item.yieldPct > 0 ? item.rate / (item.yieldPct / 100) : item.rate;
                 const unitRate = item.conv > 0 ? effRate / item.conv : effRate;
 
-                const row = `
+                tbody.innerHTML += `
                     <tr>
                         <td><strong>${item.code}</strong></td>
                         <td>${item.name}</td>
@@ -777,7 +998,6 @@
                         </td>
                     </tr>
                 `;
-                tbody.innerHTML += row;
             });
         }
 
@@ -786,6 +1006,7 @@
             const newPrice = prompt(`Enter new Purchase Rate (₹) for '${currentItem.name}':`, currentItem.rate);
             if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
                 itemMasterStore[index].rate = parseFloat(newPrice);
+                saveAllToStorage(false);
                 renderItemMasterTable();
                 populateSubRecipeDropdowns();
                 updateRecipeIngredientDropdown();
@@ -794,8 +1015,9 @@
         }
 
         function deleteItemMaster(index) {
-            if (confirm(`Delete item?`)) {
+            if (confirm(`Delete item '${itemMasterStore[index].name}'?`)) {
                 itemMasterStore.splice(index, 1);
+                saveAllToStorage(false);
                 renderItemMasterTable();
                 populateSubRecipeDropdowns();
                 updateRecipeIngredientDropdown();
@@ -815,8 +1037,10 @@
                     if (!line) continue;
                     const cols = line.split(',');
                     if (cols.length >= 2) {
-                        itemMasterStore.push({
-                            code: cols[0].trim().toUpperCase(),
+                        const code = cols[0].trim().toUpperCase();
+                        const existingIdx = itemMasterStore.findIndex(item => item.code === code);
+                        const itemObj = {
+                            code: code,
                             name: cols[1].trim(),
                             cat: (cols[2] || 'GROCERY').trim().toUpperCase(),
                             purUom: (cols[3] || 'Kg').trim(),
@@ -824,10 +1048,17 @@
                             conv: parseFloat(cols[5]) || 1000,
                             rate: parseFloat(cols[6]) || 0,
                             yieldPct: parseFloat(cols[7]) || 100
-                        });
+                        };
+
+                        if (existingIdx >= 0) {
+                            itemMasterStore[existingIdx] = itemObj;
+                        } else {
+                            itemMasterStore.push(itemObj);
+                        }
                         count++;
                     }
                 }
+                saveAllToStorage(false);
                 renderItemMasterTable();
                 populateSubRecipeDropdowns();
                 updateRecipeIngredientDropdown();
@@ -858,6 +1089,7 @@
             link.click();
         }
 
+        // 2. SUB-RECIPE MASTER
         function populateSubRecipeDropdowns() {
             const select = document.getElementById('subRawItem');
             if (!select) return;
@@ -887,6 +1119,7 @@
                 rawQty, yieldQty, yieldPct, cost, unitCostGrams
             });
 
+            saveAllToStorage(false);
             renderSubRecipeTable();
             updateRecipeIngredientDropdown();
             alert(`Sub-Recipe batch '${prepName}' created!`);
@@ -894,19 +1127,40 @@
 
         function renderSubRecipeTable() {
             const tbody = document.getElementById('tbodySubRecipe');
+            if (!tbody) return;
             tbody.innerHTML = '';
-            subRecipeStore.forEach(sub => {
-                tbody.innerHTML += `<tr><td><strong>${sub.name}</strong></td><td>${sub.source}</td><td>${sub.rawQty} Kg</td><td>${sub.yieldQty} Kg</td><td>${sub.yieldPct}%</td><td>₹ ${sub.cost.toFixed(2)}</td></tr>`;
+            subRecipeStore.forEach((sub, idx) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${sub.name}</strong></td>
+                        <td>${sub.source}</td>
+                        <td>${sub.rawQty.toFixed(2)} Kg</td>
+                        <td>${sub.yieldQty.toFixed(2)} Kg</td>
+                        <td>${sub.yieldPct.toFixed(1)}%</td>
+                        <td>₹ ${sub.cost.toFixed(2)}</td>
+                        <td><button class="btn-action btn-danger" onclick="deleteSubRecipe(${idx})">Delete</button></td>
+                    </tr>
+                `;
             });
         }
 
-        function populateRecipePosDropdown() {
+        function deleteSubRecipe(idx) {
+            if (confirm(`Delete sub-recipe '${subRecipeStore[idx].name}'?`)) {
+                subRecipeStore.splice(idx, 1);
+                saveAllToStorage(false);
+                renderSubRecipeTable();
+                updateRecipeIngredientDropdown();
+            }
+        }
+
+        // 3. MAIN RECIPE MASTER BUILDER
+        function populateRecipePosDropdowns() {
             const select = document.getElementById('recipePosSelect');
             if (!select) return;
             select.innerHTML = '';
             Object.keys(posMenuData).forEach(cat => {
                 posMenuData[cat].forEach(m => {
-                    select.innerHTML += `<option value="${m.code}">${m.code}: ${m.name} (₹${m.price})</option>`;
+                    select.innerHTML += `<option value="${m.code}">${m.code}: ${m.name} (Selling: ₹${m.price.toFixed(2)})</option>`;
                 });
             });
         }
@@ -936,7 +1190,7 @@
             const ingCode = document.getElementById('recipeIngSelect').value;
             const qty = parseFloat(document.getElementById('recipeIngQty').value) || 0;
 
-            if (!posCode || !ingCode || qty <= 0) return alert('Select POS Menu SKU, Ingredient and Qty.');
+            if (!posCode || !ingCode || qty <= 0) return alert('Select POS Menu SKU, Ingredient and enter Quantity.');
 
             let targetMenu = null;
             Object.keys(posMenuData).forEach(cat => {
@@ -968,51 +1222,126 @@
             if (!targetMenu.recipeList) targetMenu.recipeList = [];
             targetMenu.recipeList.push({ ingName, qty, uom, cost: ingTotalCost });
 
+            // Roll up final cost of dish
             targetMenu.cost = targetMenu.recipeList.reduce((sum, ing) => sum + ing.cost, 0);
             targetMenu.pct = targetMenu.price > 0 ? ((targetMenu.cost / targetMenu.price) * 100).toFixed(1) + '%' : '0%';
 
+            saveAllToStorage(false);
             renderMainRecipeTable();
             renderMenuMasterTable();
-            alert(`Added ${qty}${uom} of ${ingName} to ${targetMenu.name}!`);
+            alert(`Added component to ${targetMenu.name}! Final dish cost is now ₹${targetMenu.cost.toFixed(2)}`);
         }
 
         function renderMainRecipeTable() {
             const tbody = document.getElementById('tbodyMainRecipe');
+            if (!tbody) return;
             tbody.innerHTML = '';
             Object.keys(posMenuData).forEach(cat => {
                 posMenuData[cat].forEach(item => {
                     const breakdown = item.recipeList && item.recipeList.length > 0
-                        ? item.recipeList.map(r => `${r.qty} ${r.uom} ${r.ingName}`).join(' + ')
+                        ? item.recipeList.map(r => `${r.qty} ${r.uom} ${r.ingName} (₹${r.cost.toFixed(2)})`).join(' + ')
                         : 'No components linked yet.';
 
-                    tbody.innerHTML += `<tr><td><strong>${item.name} (${item.code})</strong></td><td>₹ ${item.price.toFixed(2)}</td><td>${breakdown}</td><td>1 Portion</td><td><strong>₹ ${item.cost.toFixed(2)}</strong></td><td class="status-ok">${item.pct}</td></tr>`;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.name} (${item.code})</strong></td>
+                            <td>₹ ${item.price.toFixed(2)}</td>
+                            <td>${breakdown}</td>
+                            <td>1 Portion</td>
+                            <td><strong>₹ ${item.cost.toFixed(2)}</strong></td>
+                            <td class="status-ok">${item.pct}</td>
+                            <td><button class="btn-action btn-warning" onclick="clearRecipeComponents('${item.code}')">Clear Recipe</button></td>
+                        </tr>
+                    `;
                 });
             });
         }
 
+        function clearRecipeComponents(posCode) {
+            Object.keys(posMenuData).forEach(cat => {
+                const found = posMenuData[cat].find(m => m.code === posCode);
+                if (found) {
+                    found.recipeList = [];
+                    found.cost = 0;
+                    found.pct = '0.0%';
+                }
+            });
+            saveAllToStorage(false);
+            renderMainRecipeTable();
+            renderMenuMasterTable();
+        }
+
+        // 4. POS MENU MASTER & GLOBAL POS MASTER
         function executeAddMenuMaster() {
             const code = document.getElementById('menuCode').value.trim().toUpperCase();
             const name = document.getElementById('menuName').value.trim();
             const cat = document.getElementById('menuCat').value;
             const price = parseFloat(document.getElementById('menuPrice').value) || 0;
 
-            if (!code || !name || price <= 0) return alert('Enter POS Code, Name, and Price.');
+            if (!code || !name || price <= 0) return alert('Enter POS Code, Name, and Selling Price.');
 
             if (!posMenuData[cat]) posMenuData[cat] = [];
             posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
 
+            saveAllToStorage(false);
             renderMenuMasterTable();
+            renderGlobalPosTable();
             renderMainRecipeTable();
-            populateRecipePosDropdown();
+            populateRecipePosDropdowns();
             alert(`POS Menu SKU '${name}' added!`);
         }
 
         function renderMenuMasterTable() {
             const tbody = document.getElementById('tbodyMenuMaster');
+            if (!tbody) return;
             tbody.innerHTML = '';
             Object.keys(posMenuData).forEach(cat => {
                 posMenuData[cat].forEach((item, idx) => {
-                    tbody.innerHTML += `<tr><td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge">${item.cat}</span></td><td>₹ ${item.price.toFixed(2)}</td><td>₹ ${item.cost.toFixed(2)}</td><td class="status-ok">${item.pct}</td><td><button class="btn-action btn-warning" onclick="editMenuPrice('${cat}', ${idx})">Edit Price</button></td></tr>`;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.code}</strong></td>
+                            <td>${item.name}</td>
+                            <td><span class="badge">${item.cat}</span></td>
+                            <td>₹ ${item.price.toFixed(2)}</td>
+                            <td>₹ ${item.cost.toFixed(2)}</td>
+                            <td class="status-ok">${item.pct}</td>
+                            <td>
+                                <button class="btn-action btn-warning" onclick="editMenuPrice('${cat}', ${idx})">Edit Price</button>
+                                <button class="btn-action btn-danger" onclick="deleteMenuSKU('${cat}', ${idx})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+        }
+
+        function deleteMenuSKU(cat, idx) {
+            if (confirm(`Delete '${posMenuData[cat][idx].name}' from POS Master?`)) {
+                posMenuData[cat].splice(idx, 1);
+                saveAllToStorage(false);
+                renderMenuMasterTable();
+                renderGlobalPosTable();
+                renderMainRecipeTable();
+                populateRecipePosDropdowns();
+            }
+        }
+
+        function renderGlobalPosTable() {
+            const tbody = document.getElementById('tbodyGlobalPos');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.code}</strong></td>
+                            <td>${item.name}</td>
+                            <td>${item.cat}</td>
+                            <td>PARTY FOOD MENU</td>
+                            <td>₹ ${item.price.toFixed(2)}</td>
+                            <td><span class="badge" style="background:#dcfce7; color:#166534;">ACTIVE</span></td>
+                        </tr>
+                    `;
                 });
             });
         }
@@ -1023,7 +1352,9 @@
             if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
                 currentItem.price = parseFloat(newPrice);
                 currentItem.pct = currentItem.price > 0 ? ((currentItem.cost / currentItem.price) * 100).toFixed(1) + '%' : '0%';
+                saveAllToStorage(false);
                 renderMenuMasterTable();
+                renderGlobalPosTable();
                 renderMainRecipeTable();
                 alert('Price updated!');
             }
@@ -1047,13 +1378,21 @@
                         const price = parseFloat(cols[3]) || 0;
 
                         if (!posMenuData[cat]) posMenuData[cat] = [];
-                        posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0, pct: '0%', recipeList: [] });
+                        const existing = posMenuData[cat].find(m => m.code === code);
+                        if (existing) {
+                            existing.name = name;
+                            existing.price = price;
+                        } else {
+                            posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0, pct: '0%', recipeList: [] });
+                        }
                         count++;
                     }
                 }
+                saveAllToStorage(false);
                 renderMenuMasterTable();
+                renderGlobalPosTable();
                 renderMainRecipeTable();
-                populateRecipePosDropdown();
+                populateRecipePosDropdowns();
                 alert(`Imported ${count} POS Menu items!`);
             };
             reader.readAsText(file);
@@ -1069,6 +1408,7 @@
             link.click();
         }
 
+        // AUDIT & DASHBOARD
         function updateBreadcrumb(trailArray) {
             const bc = document.getElementById('breadcrumbTrail');
             bc.innerHTML = trailArray.map((t, idx) => {
@@ -1086,7 +1426,8 @@
         function drillToPosMenu(categoryKey) {
             switchSection('dashboard', null);
             document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-kpi'));
-            document.getElementById(`kpi-${categoryKey}`).classList.add('active-kpi');
+            const activeCard = document.getElementById(`kpi-${categoryKey}`);
+            if (activeCard) activeCard.classList.add('active-kpi');
             document.getElementById('posMenuHeader').innerText = `1. POS Menu Master & Sales Breakdown — [ Category: ${categoryKey} ]`;
             
             const tbody = document.getElementById('posMenuTbody');
@@ -1117,36 +1458,6 @@
             document.getElementById('viewItemLedger').scrollIntoView({ behavior: 'smooth' });
             updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `Item Ledger: ${family}`, action: `drillToItem('${family}')` }]);
         }
-
-        function saveUserPermissions() {
-            const id = document.getElementById('settingUserId').value.trim().toLowerCase();
-            const name = document.getElementById('settingFullName').value.trim();
-            const pass = document.getElementById('settingPassword').value;
-            const role = document.getElementById('settingRole').value;
-            if (!id || !name || !pass) return alert('Enter User ID, Name and Password.');
-            appUsers.push({ id, name, role, pass });
-            renderUsersList();
-            alert('User saved successfully.');
-        }
-
-        function renderUsersList() {
-            const tbody = document.getElementById('usersListTbody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            appUsers.forEach((u, i) => {
-                tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${u.name}</td><td><span class="badge">${u.role}</span></td><td>${u.id === 'admin' ? '<em>Root</em>' : `<button class="btn-action btn-danger" onclick="deleteUser(${i})">Delete</button>`}</td></tr>`;
-            });
-        }
-
-        function deleteUser(i) {
-            appUsers.splice(i, 1);
-            renderUsersList();
-        }
-
-        function changeUserPassword() { alert('Password updated successfully!'); }
-        function processDeconstruction() { alert('Sales bill deconstructed.'); }
-        function calculateFood() {}
-        function calculateLiquor() {}
     </script>
 </body>
 </html>
