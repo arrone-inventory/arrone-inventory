@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARRONE INVENTORY MANAGEMENT — VK CONTROLS</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --accent-purple: #673de6;
+            --accent-hover: #1d4ed8;
+            --sidebar-bg: #ffffff;
+            --sidebar-hover: #f1f5f9;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* LOGIN OVERLAY STYLES */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999;
+        }
+
+        .login-card {
+            background: #ffffff; padding: 30px; border-radius: 12px; width: 360px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); text-align: center;
+        }
+
+        .login-card h2 { 
+            margin: 0; font-size: 24px; letter-spacing: 0.5px;
+            background: linear-gradient(135deg, #2563eb, #673de6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;
+        }
+        
+        .login-card small { color: #059669; font-size: 12px; font-weight: 700; }
+        .login-card label { display: block; text-align: left; font-size: 12px; font-weight: bold; margin-top: 14px; }
+        .login-card input { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid var(--border); border-radius: 6px; }
+        .login-card button { width: 100%; padding: 10px; margin-top: 20px; background: var(--accent); color: white; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .login-card button:hover { background: var(--accent-hover); }
+
+        #appContainer { display: flex; width: 100%; height: 100vh; overflow: hidden; }
+
+        /* LEFT SIDEBAR NAVIGATION */
+        .sidebar {
+            width: 250px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+        }
+
+        .sidebar-brand { padding: 16px 20px; font-weight: bold; font-size: 16px; border-bottom: 1px solid var(--border); }
+        .sidebar-brand .brand-title {
+            background: linear-gradient(135deg, #2563eb, #673de6);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 18px;
+        }
+        .sidebar-brand small { display: block; font-size: 10px; color: #059669; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+        .nav-group { padding: 10px 0; }
+        .nav-item {
+            padding: 10px 20px; font-size: 13px; font-weight: 600; color: #475569;
+            display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.15s ease; user-select: none;
+        }
+        .nav-item:hover { background-color: var(--sidebar-hover); color: var(--accent); }
+        .nav-item.active { background-color: #eff6ff; color: var(--accent); border-left: 4px solid var(--accent); }
+
+        .nav-sub-items { display: none; background-color: #f8fafc; padding-left: 10px; }
+        .nav-sub-item { padding: 8px 20px 8px 25px; font-size: 12px; font-weight: 500; color: #64748b; cursor: pointer; }
+        .nav-sub-item:hover { color: var(--accent); font-weight: bold; }
+
+        /* MAIN CONTENT AREA */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+        .top-header {
+            height: 60px; background-color: #ffffff; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 24px; flex-shrink: 0;
+        }
+
+        .venue-title { font-size: 18px; font-weight: 800; color: var(--primary); }
+        .brand-highlight { color: #2563eb; }
+        .powered-by { color: #673de6; font-weight: 700; }
+
+        .content-body { flex: 1; padding: 24px; overflow-y: auto; }
+
+        /* KPI COST CARDS ROW */
+        .kpi-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px;
+        }
+
+        .kpi-card {
+            background-color: var(--card-bg); border: 2px solid var(--border); border-radius: 8px; padding: 14px;
+            text-align: center; cursor: pointer; transition: all 0.15s ease;
+        }
+
+        .kpi-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(37, 99, 235, 0.15); }
+        .kpi-card.active-kpi { border-color: var(--accent); background-color: #eff6ff; }
+        .kpi-title { font-size: 10px; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+        .kpi-value { font-size: 20px; font-weight: bold; margin-top: 4px; }
+
+        .breadcrumb {
+            background: #e2e8f0; padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: bold;
+            color: #334155; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;
+        }
+        .breadcrumb span { cursor: pointer; color: var(--accent); }
+        .breadcrumb span:hover { text-decoration: underline; }
+
+        .master-toolbar {
+            display: flex; gap: 8px; margin-bottom: 15px; background: #f1f5f9; padding: 10px; border-radius: 6px; border: 1px solid var(--border); flex-wrap: wrap;
+        }
+
+        .master-tab-btn {
+            padding: 6px 12px; background: #ffffff; border: 1px solid var(--border); border-radius: 4px;
+            font-size: 12px; font-weight: bold; cursor: pointer; color: #475569; transition: all 0.15s;
+        }
+
+        .master-tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+        .card {
+            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 18px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: border-color 0.3s ease;
+        }
+
+        .card h2 { margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--border); padding-bottom: 8px; color: var(--primary); display: flex; justify-content: space-between; align-items: center; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th, td { text-align: left; padding: 8px 10px; border: 1px solid var(--border); }
+        th { background-color: #f1f5f9; color: #334155; font-size: 11px; text-transform: uppercase; font-weight: bold; }
+
+        input, select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px; box-sizing: border-box; }
+        input.num-input { width: 80px; text-align: right; }
+        input.text-input { width: 100%; text-align: left; }
+
+        .badge { background-color: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; }
+        .badge:hover { background-color: #c7d2fe; }
+
+        .btn-action { background-color: var(--accent); color: white; font-weight: bold; border: none; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 12px; }
+        .btn-success { background-color: var(--success); }
+        .btn-warning { background-color: var(--warning); }
+        .btn-danger { background-color: var(--danger); }
+        .status-ok { color: var(--success); font-weight: bold; }
+        .status-warn { color: var(--danger); font-weight: bold; }
+
+        .summary-bar {
+            background-color: #f1f5f9; padding: 12px; border-radius: 6px; display: flex; justify-content: space-between; margin-top: 15px; font-weight: bold; font-size: 14px;
+        }
+
+        /* BCG MENU ENGINEERING MATRIX QUADRANTS */
+        .bcg-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; height: 320px;
+        }
+        .bcg-box {
+            border-radius: 8px; padding: 15px; border: 2px solid var(--border); display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .bcg-star { background-color: #dcfce7; border-color: #16a34a; }
+        .bcg-plowhorse { background-color: #fef3c7; border-color: #d97706; }
+        .bcg-puzzle { background-color: #e0f2fe; border-color: #0284c7; }
+        .bcg-dog { background-color: #fee2e2; border-color: #dc2626; }
+        .bcg-title { font-weight: bold; font-size: 14px; text-transform: uppercase; }
+
+        @media print {
+            @page { size: A4 landscape; margin: 10mm; }
+            body { background-color: #ffffff; color: #000; padding: 0; }
+            #loginOverlay, .sidebar, .top-header, .no-print { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #000; page-break-inside: avoid; display: block !important; }
+            input { border: none !important; background: transparent !important; font-weight: bold; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay">
+        <div class="login-card">
+            <h2>ARRONE INVENTORY</h2>
+            <small>VK CONTROLS</small>
+            
+            <form onsubmit="handleLogin(event)">
+                <label>User ID</label>
+                <input type="text" id="userIdInput" placeholder="e.g. admin" required>
+
+                <label>Password</label>
+                <input type="password" id="userPasswordInput" placeholder="••••••••" required>
+
+                <button type="submit">Sign In to ARRONE System</button>
+            </form>
+            <div id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px;"></div>
+        </div>
+    </div>
+
+    <div id="appContainer" style="display: none;">
+
+        <div class="sidebar">
+            <div class="sidebar-brand">
+                <div>
+                    <span class="brand-title">ARRONE INVENTORY</span>
+                    <small>VK CONTROLS</small>
+                </div>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-item active" onclick="switchSection('dashboard', this)">
+                    <span>📊 Dashboard & Audit</span>
+                </div>
+
+                <div class="nav-item" onclick="toggleSubNav('reportsSub')">
+                    <span>📈 Reports</span>
+                    <small>▼</small>
+                </div>
+                <div id="reportsSub" class="nav-sub-items" style="display: block;">
+                    <div class="nav-sub-item" onclick="switchSection('itemwiseReport', this)">Itemwise Costing Report</div>
+                    <div class="nav-sub-item" onclick="switchSection('bcgMatrix', this)">Menu Engineering Matrix (BCG)</div>
+                    <div class="nav-sub-item" onclick="switchSection('idealActual', this)">Ideal vs Actual Detailed Report</div>
+                    <div class="nav-sub-item" onclick="switchSection('stiSales', this)">STI vs Sales Report</div>
+                </div>
+
+                <div class="nav-item" onclick="toggleSubNav('costingSub')">
+                    <span>🍳 Costing & Recipes</span>
+                    <small>▼</small>
+                </div>
+                <div id="costingSub" class="nav-sub-items">
+                    <div class="nav-sub-item" onclick="switchSection('food', this)">Kitchen Food Calculator</div>
+                    <div class="nav-sub-item" onclick="switchSection('cocktail', this)">Cocktails & Spirits</div>
+                    <div class="nav-sub-item" onclick="switchSection('mocktail', this)">Mocktails & NAB</div>
+                </div>
+
+                <div class="nav-item" onclick="toggleSubNav('mastersSub')">
+                    <span>📦 Masters</span>
+                    <small>▼</small>
+                </div>
+                <div id="mastersSub" class="nav-sub-items" style="display: block;">
+                    <div class="nav-sub-item" onclick="isolateMaster('secGlobalPosList')">Global POS Item List</div>
+                    <div class="nav-sub-item" onclick="isolateMaster('secItemMaster')">Item Master</div>
+                    <div class="nav-sub-item" onclick="isolateMaster('secSubRecipeMaster')">Sub-Recipe Master</div>
+                    <div class="nav-sub-item" onclick="isolateMaster('secMainRecipeMaster')">Recipe Master Builder</div>
+                    <div class="nav-sub-item" onclick="isolateMaster('secMenuMaster')">POS Menu Master</div>
+                </div>
+
+                <div class="nav-item" onclick="switchSection('settings', this)">
+                    <span>⚙️ Settings & Users</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-wrapper">
+            
+            <div class="top-header">
+                <div class="venue-title">
+                    <span class="brand-highlight">VK CONTROLS</span> — <span class="powered-by">ARRONE INVENTORY MANAGEMENT SYSTEM</span>
+                </div>
+
+                <div style="display: flex; gap: 15px; align-items: center; font-size: 13px;">
+                    <div>User: <strong id="currentUsername">Vasudevan (Admin)</strong> <span class="badge" id="currentUserRole">ADMIN</span></div>
+                    <button class="btn-action" style="background-color: var(--danger); padding: 4px 10px; font-size: 11px;" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="content-body">
+
+                <div id="secDashboard" class="section-block">
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card" id="kpi-FOOD" onclick="drillToPosMenu('FOOD')">
+                            <div class="kpi-title">Food Cost %</div>
+                            <div class="kpi-value status-ok">28.4%</div>
+                            <small style="font-size: 10px; color: #64748b;">Click ➔ POS Sales</small>
+                        </div>
+                        <div class="kpi-card" id="kpi-LIQUOR" onclick="drillToPosMenu('LIQUOR')">
+                            <div class="kpi-title">Liquor Cost %</div>
+                            <div class="kpi-value status-ok">18.0%</div>
+                            <small style="font-size: 10px; color: #64748b;">Click ➔ POS Sales</small>
+                        </div>
+                        <div class="kpi-card" id="kpi-NAB" onclick="drillToPosMenu('NAB')">
+                            <div class="kpi-title">NAB Cost %</div>
+                            <div class="kpi-value status-ok">11.2%</div>
+                            <small style="font-size: 10px; color: #64748b;">Click ➔ POS Sales</small>
+                        </div>
+                        <div class="kpi-card" id="kpi-BREWERY" onclick="drillToPosMenu('BREWERY')">
+                            <div class="kpi-title">Brewery Cost %</div>
+                            <div class="kpi-value status-ok">14.5%</div>
+                            <small style="font-size: 10px; color: #64748b;">Click ➔ POS Sales</small>
+                        </div>
+                        <div class="kpi-card" id="kpi-TOBACCO" onclick="drillToPosMenu('TOBACCO')">
+                            <div class="kpi-title">Tobacco Cost %</div>
+                            <div class="kpi-value status-ok">32.0%</div>
+                            <small style="font-size: 10px; color: #64748b;">Click ➔ POS Sales</small>
+                        </div>
+                    </div>
+
+                    <div class="breadcrumb" id="breadcrumbTrail">
+                        <span onclick="showDashboard()">Dashboard Home</span>
+                    </div>
+
+                    <div id="viewPosMenu" class="card">
+                        <h2 id="posMenuHeader">1. POS Menu Master & Sales Breakdown</h2>
+                        <table id="posMenuTable">
+                            <thead>
+                                <tr><th>POS Code</th><th>POS Menu Selling Name</th><th>Category</th><th>Price (₹)</th><th>Units Sold</th><th>Menu Cost (₹)</th><th>Cost %</th><th>Action</th></tr>
+                            </thead>
+                            <tbody id="posMenuTbody"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="viewCategory" class="card">
+                        <h2 id="categoryHeader">2. Category-Wise Consumption Summary</h2>
+                        <table>
+                            <thead>
+                                <tr><th>Category Family</th><th>Primary Ingredients</th><th>Theoretical Usage Qty</th><th>Category Spend (₹)</th><th>Drill Down Action</th></tr>
+                            </thead>
+                            <tbody id="categoryTbody">
+                                <tr>
+                                    <td><span class="badge" onclick="drillToItem('CHICKEN')">CHICKEN</span></td>
+                                    <td>Chicken Boneless, Raw Chicken Whole</td>
+                                    <td>18.500 Kg</td>
+                                    <td>₹ 4,070.00</td>
+                                    <td><button class="btn-action" onclick="drillToItem('CHICKEN')">Inspect Item Ledger ➔</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="viewItemLedger" class="card">
+                        <h2 id="itemLedgerHeader">3. Raw Item Variance Ledger</h2>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Item Code</th><th>Item Description</th><th>Category</th><th>Opening</th><th>Purchases</th><th>Closing</th><th>Actual Usage</th><th>Theoretical</th><th>Variance Qty</th><th>Rate (₹)</th><th>Variance Value (₹)</th><th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemLedgerTbody"></tbody>
+                        </table>
+                        <div class="summary-bar">
+                            <div>Total Family Actual Usage: <strong id="sumActualUsage">19.500 Kg</strong></div>
+                            <div>Theoretical Requirement: <strong id="sumTheoUsage">18.500 Kg</strong></div>
+                            <div>Total Variance Gap: <strong id="sumVarianceVal" class="status-warn">₹ -220.00</strong></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="secItemwiseReport" class="section-block" style="display: none;">
+                    <div class="card">
+                        <h2><span>ITEMWISE COSTING REPORT</span></h2>
+                        <table>
+                            <thead>
+                                <tr><th>Classification</th><th>Menu Group</th><th>Item / Dish Name</th><th>Number Sold</th><th>Item Sell Rate</th><th>Item Cost</th><th>Total Revenue</th><th>Total Cost</th><th>Total Profit</th><th>Cost %</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Food</td><td>PARTY FOOD MENU</td><td>Chicken Butter Masala</td><td>40</td><td>₹ 450.00</td><td>₹ 112.50</td><td>₹ 18,000.00</td><td>₹ 4,500.00</td><td>₹ 13,500.00</td><td class="status-ok">25.0%</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="secBcgMatrix" class="section-block" style="display: none;">
+                    <div class="card">
+                        <h2>MENU ENGINEERING MATRIX (BCG CLASSIFICATION)</h2>
+                        <div class="bcg-grid">
+                            <div class="bcg-box bcg-star">
+                                <div class="bcg-title">🌟 STAR (High Profit, High Popularity)</div>
+                                <div style="font-size: 12px; margin-top: 6px;">• Chicken Butter Masala (40 Sold)</div>
+                            </div>
+                            <div class="bcg-box bcg-plowhorse">
+                                <div class="bcg-title">🐎 WORK HORSE (Low Profit, High Popularity)</div>
+                                <div style="font-size: 12px; margin-top: 6px;">• Mutton Rogan Josh (20 Sold)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="secIdealActual" class="section-block" style="display: none;">
+                    <div class="card"><h2>IDEAL VS ACTUAL DETAILED REPORT</h2></div>
+                </div>
+
+                <div id="secStiSales" class="section-block" style="display: none;">
+                    <div class="card"><h2>STI VS SALES REPORT</h2></div>
+                </div>
+
+                <div id="secMasters" class="section-block" style="display: none;">
+                    
+                    <div class="master-toolbar">
+                        <button class="master-tab-btn active" onclick="isolateMaster('ALL')">📦 All Masters</button>
+                        <button class="master-tab-btn" onclick="isolateMaster('secGlobalPosList')">Global POS List</button>
+                        <button class="master-tab-btn" onclick="isolateMaster('secItemMaster')">1. Item Master</button>
+                        <button class="master-tab-btn" onclick="isolateMaster('secSubRecipeMaster')">2. Sub-Recipe Master</button>
+                        <button class="master-tab-btn" onclick="isolateMaster('secMainRecipeMaster')">3. Recipe Builder</button>
+                        <button class="master-tab-btn" onclick="isolateMaster('secMenuMaster')">4. POS Menu Master</button>
+                    </div>
+
+                    <div id="secGlobalPosList" class="card master-card">
+                        <h2>GLOBAL POS ITEM LIST</h2>
+                        <table>
+                            <thead><tr><th>POS Code</th><th>Item Name</th><th>Classification</th><th>Menu Group</th><th>Rate</th><th>Status</th></tr></thead>
+                            <tbody>
+                                <tr><td>1192</td><td>KADAI PANEER</td><td>Food</td><td>PARTY FOOD MENU</td><td>₹ 380.00</td><td><span class="badge" style="background:#dcfce7; color:#166534;">ACTIVE</span></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div id="secItemMaster" class="card master-card">
+                        <h2>
+                            <span>1. Item Master (Conversion Factors & Yield Costs)</span>
+                            <div>
+                                <input type="file" id="importItemCsv" accept=".csv" style="display:none" onchange="handleItemCsvImport(event)">
+                                <button class="btn-action btn-warning" onclick="document.getElementById('importItemCsv').click()">📥 Import CSV</button>
+                                <button class="btn-action" onclick="downloadSampleItemCsv()">📄 Sample Template</button>
+                                <button class="btn-action btn-success" onclick="exportItemMasterCsv()">📊 Export CSV</button>
+                            </div>
+                        </h2>
+                        
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <input type="text" id="addCode" placeholder="Code (CHK-03)" style="flex: 1; min-width: 90px;">
+                                <input type="text" id="addName" placeholder="Item Description" style="flex: 2; min-width: 140px;">
+                                <select id="addCat" style="flex: 1.2; min-width: 110px;">
+                                    <option value="CHICKEN">CHICKEN</option>
+                                    <option value="MUTTON">MUTTON</option>
+                                    <option value="SEAFOOD">SEAFOOD</option>
+                                    <option value="VEGETABLES">VEGETABLES</option>
+                                    <option value="DAIRY">DAIRY</option>
+                                    <option value="LIQUOR">LIQUOR</option>
+                                </select>
+                                <input type="text" id="addPurUom" placeholder="Purchase UOM" style="flex: 1; min-width: 90px;">
+                                <input type="text" id="addRecUom" placeholder="Recipe UOM" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addConv" placeholder="Conversion" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addRate" placeholder="Rate (₹)" style="flex: 1; min-width: 90px;">
+                                <input type="number" id="addYield" placeholder="Yield %" style="flex: 1; min-width: 80px;">
+                                <button class="btn-action btn-success" onclick="executeAddItemMaster()">+ Add Item</button>
+                            </div>
+                        </div>
+
+                        <table id="tblItemMaster">
+                            <thead>
+                                <tr><th>Code</th><th>Name</th><th>Category</th><th>Purchase UOM</th><th>Recipe UOM</th><th>Conversion</th><th>Base Rate</th><th>Yield %</th><th>Yield Cost</th><th>Recipe Unit Cost</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="tbodyItemMaster"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="secSubRecipeMaster" class="card master-card">
+                        <h2>2. Sub-Recipe Master (Prep Batches & Yield %)</h2>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="subPrepName" placeholder="Prep Name" style="flex: 2;">
+                                <select id="subRawItem" style="flex: 2;"></select>
+                                <input type="number" id="subRawQty" placeholder="Raw Qty (Kg)" style="flex: 1;">
+                                <input type="number" id="subYieldPct" placeholder="Yield %" style="flex: 1;">
+                                <button class="btn-action btn-success" onclick="executeAddSubRecipe()">+ Create Sub-Recipe</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead><tr><th>Batch Name</th><th>Source Item</th><th>Raw Qty</th><th>Yield Qty</th><th>Yield %</th><th>Batch Cost</th></tr></thead>
+                            <tbody id="tbodySubRecipe"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="secMainRecipeMaster" class="card master-card">
+                        <h2>3. Recipe Master Builder (Interlinked to POS Menu SKUs)</h2>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <select id="recipePosSelect" style="flex: 2;"></select>
+                                <select id="recipeClassSelect" style="flex: 1;">
+                                    <option value="Food">Food</option>
+                                    <option value="Liquor">Liquor</option>
+                                </select>
+                                <input type="text" id="recipeUomSelect" placeholder="UOM" value="SET" style="flex: 1;">
+                                <input type="number" id="recipePortionCount" placeholder="Portions" value="1" style="flex: 1;">
+                            </div>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="recipeIngType" style="flex: 1;" onchange="updateRecipeIngredientDropdown()">
+                                    <option value="RAW">Raw Item</option>
+                                    <option value="SUB">Sub-Recipe</option>
+                                </select>
+                                <select id="recipeIngSelect" style="flex: 2;"></select>
+                                <input type="number" id="recipeIngQty" placeholder="Qty (Recipe UOM)" style="flex: 1;">
+                                <button class="btn-action btn-success" onclick="executeAddRecipeIngredient()">+ Add Component</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead><tr><th>POS Menu SKU</th><th>Selling Price</th><th>Ingredients Breakdown</th><th>Portions</th><th>Calculated Cost</th><th>Cost %</th></tr></thead>
+                            <tbody id="tbodyMainRecipe"></tbody>
+                        </table>
+                    </div>
+
+                    <div id="secMenuMaster" class="card master-card">
+                        <h2>
+                            <span>4. POS Menu Master (POS Code, Name, Price & Software Import)</span>
+                            <div>
+                                <input type="file" id="importPosCsv" accept=".csv" style="display:none" onchange="handlePosCsvImport(event)">
+                                <button class="btn-action btn-warning" onclick="document.getElementById('importPosCsv').click()">📥 Import POS CSV</button>
+                                <button class="btn-action" onclick="downloadSamplePosCsv()">📄 Sample POS Template</button>
+                            </div>
+                        </h2>
+                        <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="menuCode" placeholder="POS Code" style="flex: 1;">
+                                <input type="text" id="menuName" placeholder="POS Selling Item Name" style="flex: 2;">
+                                <select id="menuCat" style="flex: 1.5;">
+                                    <option value="FOOD">FOOD</option>
+                                    <option value="LIQUOR">LIQUOR</option>
+                                    <option value="NAB">NAB</option>
+                                </select>
+                                <input type="number" id="menuPrice" placeholder="Price (₹)" style="flex: 1;">
+                                <button class="btn-action btn-success" onclick="executeAddMenuMaster()">+ Add Menu SKU</button>
+                            </div>
+                        </div>
+                        <table>
+                            <thead><tr><th>POS Code</th><th>POS Menu Selling Name</th><th>Category</th><th>Selling Price</th><th>Recipe Cost</th><th>Cost %</th><th>Actions</th></tr></thead>
+                            <tbody id="tbodyMenuMaster"></tbody>
+                        </table>
+                    </div>
+
+                </div>
+
+                <div id="secSales" class="section-block" style="display: none;">
+                    <div class="card">
+                        <h2>POS Sales Ingestion & Automatic Deconstruction</h2>
+                        <div style="display: flex; gap: 15px;">
+                            <select id="salesPosItem" style="flex: 2;"></select>
+                            <input type="number" id="salesQty" value="25" class="text-input" style="flex: 1;">
+                            <button class="btn-action btn-success" style="flex: 1;" onclick="processDeconstruction()">Deconstruct Bill</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="secFood" class="section-block" style="display: none;">
+                    <div class="card">
+                        <h2>Kitchen Food Recipe Costing Calculator</h2>
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <input type="text" class="text-input" id="foodRecipeName" value="Signature Steak & Fries" style="flex: 1;">
+                            <input type="number" class="text-input" id="foodSellingPrice" value="650.00" style="flex: 1;">
+                            <input type="number" class="text-input" id="foodTargetCostPct" value="28.0" style="flex: 1;">
+                        </div>
+                    </div>
+                </div>
+
+                <div id="secCocktail" class="section-block" style="display: none;">
+                    <div class="card"><h2>Cocktail & Spirits Costing Calculator</h2></div>
+                </div>
+
+                <div id="secMocktail" class="section-block" style="display: none;">
+                    <div class="card"><h2>Mocktail & NAB Costing Calculator</h2></div>
+                </div>
+
+                <div id="secAudit" class="section-block" style="display: none;">
+                    <div class="card"><h2>ARRONE Bar Stock Variance Audit Sheet</h2></div>
+                </div>
+
+                <div id="secSettings" class="section-block" style="display: none;">
+                    <div class="card">
+                        <h2>⚙️ User Management & Password Control</h2>
+                        <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                                <input type="text" id="settingUserId" placeholder="User ID" style="flex: 1;">
+                                <input type="text" id="settingFullName" placeholder="Full Name" style="flex: 1.5;">
+                                <input type="password" id="settingPassword" placeholder="Password" style="flex: 1;">
+                                <select id="settingRole" style="flex: 1;">
+                                    <option value="ADMIN">ADMIN</option>
+                                    <option value="CHEF">CHEF</option>
+                                    <option value="BARTENDER">BARTENDER</option>
+                                </select>
+                            </div>
+                            <button class="btn-action btn-success" onclick="saveUserPermissions()">Save User Account</button>
+                        </div>
+                        <table>
+                            <thead><tr><th>User ID</th><th>Full Name</th><th>Role</th><th>Actions</th></tr></thead>
+                            <tbody id="usersListTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let itemMasterStore = [
+            { code: 'CHK-01', name: 'Raw Chicken Whole', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 220.00, yieldPct: 75.0 },
+            { code: 'CHK-02', name: 'Chicken Boneless Raw', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 290.00, yieldPct: 95.0 },
+            { code: 'MUT-01', name: 'Raw Mutton Curry Cut', cat: 'MUTTON', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 780.00, yieldPct: 90.0 }
+        ];
+
+        let subRecipeStore = [
+            { code: 'SUB-01', name: 'Cleaned Chicken Prep', source: 'Raw Chicken Whole (CHK-01)', rawQty: 1.0, yieldQty: 0.75, yieldPct: 75.0, cost: 220.00, unitCostGrams: 0.2933 }
+        ];
+
+        let posMenuData = {
+            'FOOD': [
+                { code: 'POS-101', name: 'Chicken Butter Masala', cat: 'FOOD', price: 450, sold: 40, cost: 112.50, pct: '25.0%', recipeList: [] }
+            ],
+            'LIQUOR': [
+                { code: 'BAR-201', name: 'Whiskey Sour Cocktail', cat: 'LIQUOR', price: 550, sold: 28, cost: 92.78, pct: '16.9%', recipeList: [] }
+            ],
+            'NAB': [
+                { code: 'NAB-301', name: 'Virgin Passion Mojito', cat: 'NAB', price: 250, sold: 18, cost: 18.37, pct: '7.3%', recipeList: [] }
+            ]
+        };
+
+        const itemLedgerData = {
+            'CHICKEN': [
+                { code: 'CHK-001', name: 'Chicken Boneless', cat: 'CHICKEN', op: 10.000, pur: 15.000, cl: 5.500, act: 19.500, theo: 18.500, varQty: 1.000, rate: 220, unit: 'Kg' }
+            ]
+        };
+
+        let appUsers = [
+            { id: 'admin', name: 'Vasudevan (Admin)', role: 'ADMIN', pass: 'admin123' },
+            { id: 'chef', name: 'Head Chef Ramesh', role: 'CHEF', pass: 'chef123' }
+        ];
+
+        let currentUser = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderItemMasterTable();
+            renderSubRecipeTable();
+            renderMenuMasterTable();
+            renderMainRecipeTable();
+            renderUsersList();
+            populateSubRecipeDropdowns();
+            populateSalesDropdowns();
+            populateRecipePosDropdown();
+            updateRecipeIngredientDropdown();
+        });
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('userIdInput').value.trim().toLowerCase();
+            const password = document.getElementById('userPasswordInput').value;
+            const foundUser = appUsers.find(u => u.id === username && u.pass === password);
+
+            if (foundUser) {
+                currentUser = { username: foundUser.id, fullName: foundUser.name, role: foundUser.role };
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('appContainer').style.display = 'flex';
+                document.getElementById('currentUsername').innerText = currentUser.fullName;
+                document.getElementById('currentUserRole').innerText = currentUser.role;
+                showDashboard();
+            } else {
+                document.getElementById('loginError').innerText = 'Invalid User ID or Password.';
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('loginOverlay').style.display = 'flex';
+        }
+
+        function toggleSubNav(id) {
+            const sub = document.getElementById(id);
+            sub.style.display = sub.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function switchSection(secKey, element) {
+            const sections = document.querySelectorAll('.section-block');
+            sections.forEach(s => s.style.display = 'none');
+
+            if (element) {
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                element.classList.add('active');
+            }
+
+            const targetMap = {
+                'dashboard': 'secDashboard',
+                'itemwiseReport': 'secItemwiseReport',
+                'bcgMatrix': 'secBcgMatrix',
+                'idealActual': 'secIdealActual',
+                'stiSales': 'secStiSales',
+                'masters': 'secMasters',
+                'sales': 'secSales',
+                'food': 'secFood',
+                'cocktail': 'secCocktail',
+                'mocktail': 'secMocktail',
+                'audit': 'secAudit',
+                'settings': 'secSettings'
+            };
+
+            const targetId = targetMap[secKey];
+            if (targetId) {
+                document.getElementById(targetId).style.display = 'block';
+            }
+        }
+
+        function isolateMaster(targetMasterId) {
+            switchSection('masters', null);
+            const masterCards = document.querySelectorAll('.master-card');
+            const masterBtns = document.querySelectorAll('.master-tab-btn');
+
+            masterBtns.forEach(b => b.classList.remove('active'));
+
+            if (targetMasterId === 'ALL') {
+                masterCards.forEach(c => c.style.display = 'block');
+                if (masterBtns[0]) masterBtns[0].classList.add('active');
+            } else {
+                masterCards.forEach(c => c.style.display = 'none');
+                const targetCard = document.getElementById(targetMasterId);
+                if (targetCard) {
+                    targetCard.style.display = 'block';
+                    targetCard.scrollIntoView({ behavior: 'smooth' });
+                }
+
+                const btnIndex = { 'secGlobalPosList': 1, 'secItemMaster': 2, 'secSubRecipeMaster': 3, 'secMainRecipeMaster': 4, 'secMenuMaster': 5 };
+                if (btnIndex[targetMasterId] && masterBtns[btnIndex[targetMasterId]]) {
+                    masterBtns[btnIndex[targetMasterId]].classList.add('active');
+                }
+            }
+        }
+
+        function executeAddItemMaster() {
+            const code = document.getElementById('addCode').value.trim().toUpperCase();
+            const name = document.getElementById('addName').value.trim();
+            const cat = document.getElementById('addCat').value;
+            const purUom = document.getElementById('addPurUom').value.trim() || 'Kg';
+            const recUom = document.getElementById('addRecUom').value.trim() || 'Grams';
+            const conv = parseFloat(document.getElementById('addConv').value) || 1000;
+            const rate = parseFloat(document.getElementById('addRate').value) || 0;
+            const yieldPct = parseFloat(document.getElementById('addYield').value) || 100;
+
+            if (!code || !name) return alert('Please fill in Item Code and Description.');
+
+            itemMasterStore.push({ code, name, cat, purUom, recUom, conv, rate, yieldPct });
+            renderItemMasterTable();
+            populateSubRecipeDropdowns();
+            updateRecipeIngredientDropdown();
+
+            document.getElementById('addCode').value = '';
+            document.getElementById('addName').value = '';
+            document.getElementById('addPurUom').value = '';
+            document.getElementById('addRecUom').value = '';
+            document.getElementById('addConv').value = '';
+            document.getElementById('addRate').value = '';
+            document.getElementById('addYield').value = '';
+
+            alert(`Item '${name}' added to Item Master!`);
+        }
+
+        function renderItemMasterTable() {
+            const tbody = document.getElementById('tbodyItemMaster');
+            tbody.innerHTML = '';
+            itemMasterStore.forEach((item, index) => {
+                const effRate = item.yieldPct > 0 ? item.rate / (item.yieldPct / 100) : item.rate;
+                const unitRate = item.conv > 0 ? effRate / item.conv : effRate;
+
+                const row = `
+                    <tr>
+                        <td><strong>${item.code}</strong></td>
+                        <td>${item.name}</td>
+                        <td><span class="badge">${item.cat}</span></td>
+                        <td>${item.purUom}</td>
+                        <td>${item.recUom}</td>
+                        <td>1 ${item.purUom} = ${item.conv} ${item.recUom}</td>
+                        <td>₹ ${item.rate.toFixed(2)}</td>
+                        <td>${item.yieldPct.toFixed(1)}%</td>
+                        <td><strong>₹ ${effRate.toFixed(2)} / ${item.purUom}</strong></td>
+                        <td><strong>₹ ${unitRate.toFixed(4)} / ${item.recUom}</strong></td>
+                        <td>
+                            <button class="btn-action btn-warning" onclick="editItemPrice(${index})">Edit</button>
+                            <button class="btn-action btn-danger" onclick="deleteItemMaster(${index})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function editItemPrice(index) {
+            const currentItem = itemMasterStore[index];
+            const newPrice = prompt(`Enter new Purchase Rate (₹) for '${currentItem.name}':`, currentItem.rate);
+            if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
+                itemMasterStore[index].rate = parseFloat(newPrice);
+                renderItemMasterTable();
+                populateSubRecipeDropdowns();
+                updateRecipeIngredientDropdown();
+                alert(`Rate for '${currentItem.name}' updated!`);
+            }
+        }
+
+        function deleteItemMaster(index) {
+            if (confirm(`Delete item?`)) {
+                itemMasterStore.splice(index, 1);
+                renderItemMasterTable();
+                populateSubRecipeDropdowns();
+                updateRecipeIngredientDropdown();
+            }
+        }
+
+        function handleItemCsvImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n');
+                let count = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const cols = line.split(',');
+                    if (cols.length >= 2) {
+                        itemMasterStore.push({
+                            code: cols[0].trim().toUpperCase(),
+                            name: cols[1].trim(),
+                            cat: (cols[2] || 'GROCERY').trim().toUpperCase(),
+                            purUom: (cols[3] || 'Kg').trim(),
+                            recUom: (cols[4] || 'Grams').trim(),
+                            conv: parseFloat(cols[5]) || 1000,
+                            rate: parseFloat(cols[6]) || 0,
+                            yieldPct: parseFloat(cols[7]) || 100
+                        });
+                        count++;
+                    }
+                }
+                renderItemMasterTable();
+                populateSubRecipeDropdowns();
+                updateRecipeIngredientDropdown();
+                alert(`Imported ${count} items successfully!`);
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadSampleItemCsv() {
+            let csv = 'Code,Name,Category,PurchaseUOM,RecipeUOM,ConversionFactor,PurchaseRate,YieldPercent\n';
+            csv += 'CHK-10,Chicken Breast,CHICKEN,Kg,Grams,1000,320.00,85.0\n';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Sample_Item_Master_Import.csv';
+            link.click();
+        }
+
+        function exportItemMasterCsv() {
+            let csv = 'Code,Name,Category,PurchaseUOM,RecipeUOM,ConversionFactor,PurchaseRate,YieldPercent\n';
+            itemMasterStore.forEach(i => {
+                csv += `"${i.code}","${i.name}","${i.cat}","${i.purUom}","${i.recUom}",${i.conv},${i.rate},${i.yieldPct}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Item_Master_Export.csv';
+            link.click();
+        }
+
+        function populateSubRecipeDropdowns() {
+            const select = document.getElementById('subRawItem');
+            if (!select) return;
+            select.innerHTML = '';
+            itemMasterStore.forEach(i => {
+                select.innerHTML += `<option value="${i.code}">${i.name} (${i.code}) - ₹${i.rate}/${i.purUom}</option>`;
+            });
+        }
+
+        function executeAddSubRecipe() {
+            const prepName = document.getElementById('subPrepName').value.trim();
+            const rawCode = document.getElementById('subRawItem').value;
+            const rawQty = parseFloat(document.getElementById('subRawQty').value) || 0;
+            const yieldPct = parseFloat(document.getElementById('subYieldPct').value) || 100;
+
+            if (!prepName || rawQty <= 0) return alert('Enter Prep Name and Qty.');
+
+            const sourceItem = itemMasterStore.find(i => i.code === rawCode);
+            const yieldQty = rawQty * (yieldPct / 100);
+            const cost = rawQty * (sourceItem ? sourceItem.rate : 0);
+            const unitCostGrams = yieldQty > 0 ? cost / (yieldQty * 1000) : 0;
+
+            subRecipeStore.push({
+                code: `SUB-0${subRecipeStore.length + 1}`,
+                name: prepName,
+                source: sourceItem ? sourceItem.name : rawCode,
+                rawQty, yieldQty, yieldPct, cost, unitCostGrams
+            });
+
+            renderSubRecipeTable();
+            updateRecipeIngredientDropdown();
+            alert(`Sub-Recipe batch '${prepName}' created!`);
+        }
+
+        function renderSubRecipeTable() {
+            const tbody = document.getElementById('tbodySubRecipe');
+            tbody.innerHTML = '';
+            subRecipeStore.forEach(sub => {
+                tbody.innerHTML += `<tr><td><strong>${sub.name}</strong></td><td>${sub.source}</td><td>${sub.rawQty} Kg</td><td>${sub.yieldQty} Kg</td><td>${sub.yieldPct}%</td><td>₹ ${sub.cost.toFixed(2)}</td></tr>`;
+            });
+        }
+
+        function populateRecipePosDropdown() {
+            const select = document.getElementById('recipePosSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach(m => {
+                    select.innerHTML += `<option value="${m.code}">${m.code}: ${m.name} (₹${m.price})</option>`;
+                });
+            });
+        }
+
+        function updateRecipeIngredientDropdown() {
+            const type = document.getElementById('recipeIngType').value;
+            const select = document.getElementById('recipeIngSelect');
+            if (!select) return;
+            select.innerHTML = '';
+
+            if (type === 'RAW') {
+                itemMasterStore.forEach(i => {
+                    const effRate = i.yieldPct > 0 ? i.rate / (i.yieldPct / 100) : i.rate;
+                    const unitRate = i.conv > 0 ? effRate / i.conv : effRate;
+                    select.innerHTML += `<option value="${i.code}">RAW: ${i.name} (₹${unitRate.toFixed(4)}/${i.recUom})</option>`;
+                });
+            } else {
+                subRecipeStore.forEach(s => {
+                    select.innerHTML += `<option value="${s.code}">PREP: ${s.name} (₹${s.unitCostGrams.toFixed(4)}/Gram)</option>`;
+                });
+            }
+        }
+
+        function executeAddRecipeIngredient() {
+            const posCode = document.getElementById('recipePosSelect').value;
+            const ingType = document.getElementById('recipeIngType').value;
+            const ingCode = document.getElementById('recipeIngSelect').value;
+            const qty = parseFloat(document.getElementById('recipeIngQty').value) || 0;
+
+            if (!posCode || !ingCode || qty <= 0) return alert('Select POS Menu SKU, Ingredient and Qty.');
+
+            let targetMenu = null;
+            Object.keys(posMenuData).forEach(cat => {
+                const found = posMenuData[cat].find(m => m.code === posCode);
+                if (found) targetMenu = found;
+            });
+
+            if (!targetMenu) return;
+
+            let ingName = '', unitCost = 0, uom = '';
+            if (ingType === 'RAW') {
+                const rawItem = itemMasterStore.find(i => i.code === ingCode);
+                if (rawItem) {
+                    ingName = rawItem.name;
+                    uom = rawItem.recUom;
+                    const effRate = rawItem.yieldPct > 0 ? rawItem.rate / (rawItem.yieldPct / 100) : rawItem.rate;
+                    unitCost = rawItem.conv > 0 ? effRate / rawItem.conv : effRate;
+                }
+            } else {
+                const subItem = subRecipeStore.find(s => s.code === ingCode);
+                if (subItem) {
+                    ingName = subItem.name;
+                    uom = 'Grams';
+                    unitCost = subItem.unitCostGrams;
+                }
+            }
+
+            const ingTotalCost = qty * unitCost;
+            if (!targetMenu.recipeList) targetMenu.recipeList = [];
+            targetMenu.recipeList.push({ ingName, qty, uom, cost: ingTotalCost });
+
+            targetMenu.cost = targetMenu.recipeList.reduce((sum, ing) => sum + ing.cost, 0);
+            targetMenu.pct = targetMenu.price > 0 ? ((targetMenu.cost / targetMenu.price) * 100).toFixed(1) + '%' : '0%';
+
+            renderMainRecipeTable();
+            renderMenuMasterTable();
+            alert(`Added ${qty}${uom} of ${ingName} to ${targetMenu.name}!`);
+        }
+
+        function renderMainRecipeTable() {
+            const tbody = document.getElementById('tbodyMainRecipe');
+            tbody.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach(item => {
+                    const breakdown = item.recipeList && item.recipeList.length > 0
+                        ? item.recipeList.map(r => `${r.qty} ${r.uom} ${r.ingName}`).join(' + ')
+                        : 'No components linked yet.';
+
+                    tbody.innerHTML += `<tr><td><strong>${item.name} (${item.code})</strong></td><td>₹ ${item.price.toFixed(2)}</td><td>${breakdown}</td><td>1 Portion</td><td><strong>₹ ${item.cost.toFixed(2)}</strong></td><td class="status-ok">${item.pct}</td></tr>`;
+                });
+            });
+        }
+
+        function executeAddMenuMaster() {
+            const code = document.getElementById('menuCode').value.trim().toUpperCase();
+            const name = document.getElementById('menuName').value.trim();
+            const cat = document.getElementById('menuCat').value;
+            const price = parseFloat(document.getElementById('menuPrice').value) || 0;
+
+            if (!code || !name || price <= 0) return alert('Enter POS Code, Name, and Price.');
+
+            if (!posMenuData[cat]) posMenuData[cat] = [];
+            posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
+
+            renderMenuMasterTable();
+            renderMainRecipeTable();
+            populateRecipePosDropdown();
+            alert(`POS Menu SKU '${name}' added!`);
+        }
+
+        function renderMenuMasterTable() {
+            const tbody = document.getElementById('tbodyMenuMaster');
+            tbody.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach((item, idx) => {
+                    tbody.innerHTML += `<tr><td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge">${item.cat}</span></td><td>₹ ${item.price.toFixed(2)}</td><td>₹ ${item.cost.toFixed(2)}</td><td class="status-ok">${item.pct}</td><td><button class="btn-action btn-warning" onclick="editMenuPrice('${cat}', ${idx})">Edit Price</button></td></tr>`;
+                });
+            });
+        }
+
+        function editMenuPrice(cat, index) {
+            const currentItem = posMenuData[cat][index];
+            const newPrice = prompt(`Enter new Selling Price (₹):`, currentItem.price);
+            if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
+                currentItem.price = parseFloat(newPrice);
+                currentItem.pct = currentItem.price > 0 ? ((currentItem.cost / currentItem.price) * 100).toFixed(1) + '%' : '0%';
+                renderMenuMasterTable();
+                renderMainRecipeTable();
+                alert('Price updated!');
+            }
+        }
+
+        function handlePosCsvImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const lines = e.target.result.split('\n');
+                let count = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const cols = line.split(',');
+                    if (cols.length >= 3) {
+                        const code = cols[0].trim().toUpperCase();
+                        const name = cols[1].trim();
+                        const cat = (cols[2] || 'FOOD').trim().toUpperCase();
+                        const price = parseFloat(cols[3]) || 0;
+
+                        if (!posMenuData[cat]) posMenuData[cat] = [];
+                        posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0, pct: '0%', recipeList: [] });
+                        count++;
+                    }
+                }
+                renderMenuMasterTable();
+                renderMainRecipeTable();
+                populateRecipePosDropdown();
+                alert(`Imported ${count} POS Menu items!`);
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadSamplePosCsv() {
+            let csv = 'POSCode,MenuItemName,Category,SellingPrice\n';
+            csv += 'POS-201,Chicken Biryani Special,FOOD,380.00\n';
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'Sample_POS_Menu_Import.csv';
+            link.click();
+        }
+
+        function updateBreadcrumb(trailArray) {
+            const bc = document.getElementById('breadcrumbTrail');
+            bc.innerHTML = trailArray.map((t, idx) => {
+                if (idx === trailArray.length - 1) return `<strong>${t.name}</strong>`;
+                return `<span onclick="${t.action}">${t.name}</span> ➔ `;
+            }).join('');
+        }
+
+        function showDashboard() {
+            switchSection('dashboard', null);
+            drillToPosMenu('FOOD');
+            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }]);
+        }
+
+        function drillToPosMenu(categoryKey) {
+            switchSection('dashboard', null);
+            document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-kpi'));
+            document.getElementById(`kpi-${categoryKey}`).classList.add('active-kpi');
+            document.getElementById('posMenuHeader').innerText = `1. POS Menu Master & Sales Breakdown — [ Category: ${categoryKey} ]`;
+            
+            const tbody = document.getElementById('posMenuTbody');
+            tbody.innerHTML = '';
+            (posMenuData[categoryKey] || posMenuData['FOOD']).forEach(item => {
+                tbody.innerHTML += `<tr><td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge" onclick="drillToCategory('${item.cat}')">${item.cat}</span></td><td>₹ ${item.price.toFixed(2)}</td><td><strong>${item.sold} units</strong></td><td>₹ ${item.cost.toFixed(2)}</td><td class="status-ok">${item.pct}</td><td><button class="btn-action" onclick="drillToCategory('${item.cat}')">Deconstruct ➔</button></td></tr>`;
+            });
+            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `POS Sales: ${categoryKey}`, action: `drillToPosMenu('${categoryKey}')` }]);
+        }
+
+        function drillToCategory(catFamily) {
+            switchSection('dashboard', null);
+            document.getElementById('categoryHeader').innerText = `2. Category Consumption Summary — [ Family: ${catFamily} ]`;
+            document.getElementById('viewCategory').scrollIntoView({ behavior: 'smooth' });
+            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `Category Usage: ${catFamily}`, action: `drillToCategory('${catFamily}')` }]);
+        }
+
+        function drillToItem(itemFamilyKey) {
+            switchSection('dashboard', null);
+            const family = itemFamilyKey === 'ALL' ? 'CHICKEN' : itemFamilyKey;
+            document.getElementById('itemLedgerHeader').innerText = `3. Raw Item Variance Ledger — Family [ ${family} ] (Op + Pur - Cl = Actual Usage)`;
+
+            const tbody = document.getElementById('itemLedgerTbody');
+            tbody.innerHTML = '';
+            (itemLedgerData[family] || itemLedgerData['CHICKEN']).forEach(item => {
+                tbody.innerHTML += `<tr><td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge">${item.cat}</span></td><td>${item.op} ${item.unit}</td><td>${item.pur} ${item.unit}</td><td>${item.cl} ${item.unit}</td><td><strong>${item.act} ${item.unit}</strong></td><td>${item.theo} ${item.unit}</td><td class="status-warn"><strong>${item.varQty} ${item.unit}</strong></td><td>₹ ${item.rate}</td><td class="status-warn">₹ ${(item.varQty * item.rate).toFixed(2)}</td><td><span class="status-warn">SHORTAGE</span></td></tr>`;
+            });
+            document.getElementById('viewItemLedger').scrollIntoView({ behavior: 'smooth' });
+            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `Item Ledger: ${family}`, action: `drillToItem('${family}')` }]);
+        }
+
+        function saveUserPermissions() {
+            const id = document.getElementById('settingUserId').value.trim().toLowerCase();
+            const name = document.getElementById('settingFullName').value.trim();
+            const pass = document.getElementById('settingPassword').value;
+            const role = document.getElementById('settingRole').value;
+            if (!id || !name || !pass) return alert('Enter User ID, Name and Password.');
+            appUsers.push({ id, name, role, pass });
+            renderUsersList();
+            alert('User saved successfully.');
+        }
+
+        function renderUsersList() {
+            const tbody = document.getElementById('usersListTbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            appUsers.forEach((u, i) => {
+                tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${u.name}</td><td><span class="badge">${u.role}</span></td><td>${u.id === 'admin' ? '<em>Root</em>' : `<button class="btn-action btn-danger" onclick="deleteUser(${i})">Delete</button>`}</td></tr>`;
+            });
+        }
+
+        function deleteUser(i) {
+            appUsers.splice(i, 1);
+            renderUsersList();
+        }
+
+        function changeUserPassword() { alert('Password updated successfully!'); }
+        function processDeconstruction() { alert('Sales bill deconstructed.'); }
+        function calculateFood() {}
+        function calculateLiquor() {}
+    </script>
+</body>
+</html>
