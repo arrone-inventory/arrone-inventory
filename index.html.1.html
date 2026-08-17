@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARRONE INVENTORY MANAGEMENT — VK CONTROLS</title>
+    <title>ARRONE INVENTORY MANAGEMENT — VK CONTRROL</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary: #1D1E20;
@@ -158,6 +160,7 @@
         .btn-warning { background-color: var(--warning); }
         .btn-danger { background-color: var(--danger); }
         .btn-save { background-color: #059669; color: white; font-weight: bold; }
+        .btn-cloud { background-color: #673DE6; color: white; font-weight: bold; }
         .status-ok { color: var(--success); font-weight: bold; }
         .status-warn { color: var(--danger); font-weight: bold; }
 
@@ -181,13 +184,14 @@
             input { border: none !important; background: transparent !important; font-weight: bold; }
         }
     </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
     <div id="loginOverlay">
         <div class="login-card">
             <h2>ARRONE INVENTORY</h2>
-            <small>VK CONTROLS</small>
+            <small>VK CONTRROL</small>
             
             <form onsubmit="handleLogin(event)">
                 <label>User ID</label>
@@ -208,7 +212,7 @@
             <div class="sidebar-brand">
                 <div>
                     <span class="brand-title">ARRONE INVENTORY</span>
-                    <small>VK CONTROLS</small>
+                    <small>VK CONTRROL</small>
                 </div>
             </div>
 
@@ -257,10 +261,12 @@
             
             <div class="top-header">
                 <div class="venue-title">
-                    <span class="brand-highlight">VK CONTROLS</span> — <span class="powered-by">ARRONE INVENTORY MANAGEMENT SYSTEM</span>
+                    <span class="brand-highlight">VK CONTRROL</span> — <span class="powered-by">ARRONE INVENTORY MANAGEMENT SYSTEM</span>
                 </div>
 
                 <div style="display: flex; gap: 12px; align-items: center; font-size: 13px;">
+                    <span id="liveSaveStatus" style="font-size:11px; color:#64748b; min-width:90px;">● Ready</span>
+                    <button class="btn-action btn-cloud" onclick="fetchCloudData(true)">☁️ Sync Cloud</button>
                     <button class="btn-action btn-save" onclick="saveAllToStorage(true)">💾 Save All Masters</button>
                     <button class="btn-action" style="background:#0f766e;" onclick="downloadBackup(true)" title="Download full system backup">📦 Backup Now</button>
                     <div>User: <strong id="currentUsername">Vasudevan (Admin)</strong> <span class="badge" id="currentUserRole">ADMIN</span></div>
@@ -321,7 +327,6 @@
                                 <tr><th>Category Family</th><th>Primary Ingredients</th><th>Theoretical Usage Qty</th><th>Category Spend (₹)</th><th>Drill Down Action</th></tr>
                             </thead>
                             <tbody id="categoryTbody">
-                                <!-- Populated dynamically -->
                             </tbody>
                         </table>
                     </div>
@@ -371,8 +376,7 @@
                     </div>
                 </div>
 
-
-                <!-- BCG / MENU ENGINEERING MATRIX SECTION -->
+                <!-- BCG MATRIX -->
                 <div id="secBcgMatrix" class="section-block" style="display: none;">
                     <div class="card">
                         <h2>
@@ -429,51 +433,20 @@
                             <div>Avg Margin % (Profitability threshold): <strong id="bcgAvgMargin">—</strong></div>
                         </div>
                     </div>
-
-                    <div class="card" style="margin-top: 16px;">
-                        <h2>BCG Matrix Legend & Action Recommendations</h2>
-                        <table>
-                            <thead>
-                                <tr><th>Category</th><th>Meaning</th><th>Recommended Action</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="badge" style="background:#dcfce7; color:#166534;">⭐ STARS</span></td>
-                                    <td>High sales volume + High contribution margin</td>
-                                    <td>Promote heavily, protect quality, feature as signature items</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge" style="background:#dbeafe; color:#1e40af;">🐄 CASH COWS</span></td>
-                                    <td>Low/moderate sales + High contribution margin</td>
-                                    <td>Maintain, increase visibility, upsell, or raise price carefully</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge" style="background:#fef3c7; color:#92400e;">❓ QUESTION MARKS</span></td>
-                                    <td>High sales volume + Low contribution margin</td>
-                                    <td>Re-engineer recipe / reduce cost, or re-price, or reduce promotion</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge" style="background:#fee2e2; color:#991b1b;">🐕 DOGS</span></td>
-                                    <td>Low sales + Low contribution margin</td>
-                                    <td>Consider removing from menu or major reformulation</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
                 </div>
 
                 <div id="secDocVault" class="section-block" style="display: none;">
                     <div class="card">
                         <h2>
                             <span>📎 Costing & Recipe Supporting Documents Vault</span>
-                            <small style="color:var(--text-muted); font-size: 11px;">(Files are converted to Base64 and stored in browser memory)</small>
+                            <small style="color:var(--text-muted); font-size: 11px;">(Synced with Supabase Cloud Storage)</small>
                         </h2>
-                        <p style="font-size: 12px; color: var(--text-muted);">Upload spec sheets, supplier rate cards, food costing PDFs, or spreadsheets. Files persist across reloads and are available for download.</p>
+                        <p style="font-size: 12px; color: var(--text-muted);">Upload spec sheets, supplier rate cards, food costing PDFs, or spreadsheets directly to Cloud Storage.</p>
                         
                         <div class="doc-dropzone" onclick="document.getElementById('fileUploadInput').click()">
-                            📁 <strong>Click here to upload costing documents (PDF, Excel, Images, CSV)</strong><br>
-                            <small style="color: #64748b;">Max file size: 5MB per document</small>
-                            <input type="file" id="fileUploadInput" style="display:none" onchange="handleDocumentUpload(event)" multiple>
+                            📁 <strong>Click here to upload costing documents to Cloud</strong><br>
+                            <small style="color: #64748b;">Uploads directly to Supabase storage bucket</small>
+                            <input type="file" id="fileUploadInput" style="display:none" onchange="uploadFileToSupabase(event)" multiple>
                         </div>
 
                         <div id="uploadedDocsList"></div>
@@ -491,6 +464,7 @@
                             <button class="master-tab-btn" onclick="isolateMaster('secMainRecipeMaster')">3. Recipe Master Builder</button>
                             <button class="master-tab-btn" onclick="isolateMaster('secMenuMaster')">4. POS Menu Master</button>
                         </div>
+                        <button class="btn-action btn-cloud" onclick="fetchCloudData(true)">☁️ Sync Cloud</button>
                         <button class="btn-action btn-save" onclick="saveAllToStorage(true)">💾 Save All Changes</button>
                     </div>
 
@@ -498,8 +472,7 @@
                         <h2>GLOBAL POS ITEM MASTER (Linked with POS Menu Master)</h2>
                         <table>
                             <thead><tr><th>POS Code</th><th>Item Name</th><th>Classification</th><th>Menu Group</th><th>Selling Rate</th><th>Status</th></tr></thead>
-                            <tbody id="tbodyGlobalPos">
-                                </tbody>
+                            <tbody id="tbodyGlobalPos"></tbody>
                         </table>
                     </div>
 
@@ -571,19 +544,6 @@
                                 <button class="btn-action btn-success" id="subSaveBtn" onclick="executeAddSubRecipe()">+ Create Sub-Recipe</button>
                                 <button class="btn-action btn-warning" id="subCancelBtn" style="display:none;" onclick="cancelSubRecipeEdit()">Cancel Edit</button>
                             </div>
-                            <div style="margin-top: 8px;">
-                                <label style="font-size: 11px; font-weight: bold; color: var(--text-muted);">Filter by Category: </label>
-                                <select id="subFilterCat" onchange="filterSubRecipeTable()" style="padding: 4px 8px; font-size: 12px;">
-                                    <option value="ALL">All Categories</option>
-                                    <option value="CHICKEN">CHICKEN</option>
-                                    <option value="MUTTON">MUTTON</option>
-                                    <option value="SEAFOOD">SEAFOOD</option>
-                                    <option value="VEGETABLES">VEGETABLES</option>
-                                    <option value="DAIRY">DAIRY</option>
-                                    <option value="GROCERY">GROCERY</option>
-                                    <option value="LIQUOR">LIQUOR</option>
-                                </select>
-                            </div>
                         </div>
                         <table>
                             <thead><tr><th>Batch Name</th><th>Source Item</th><th>Raw Qty</th><th>Yield Qty</th><th>Yield %</th><th>Batch Cost (₹)</th><th>Actions</th></tr></thead>
@@ -641,17 +601,6 @@
                                 <button class="btn-action" onclick="downloadSamplePosCsv()">📄 Sample POS Template</button>
                             </div>
                         </h2>
-                        <div style="margin-bottom: 10px;">
-                            <label style="font-size: 11px; font-weight: bold; color: var(--text-muted);">Filter by Category: </label>
-                            <select id="menuFilterCat" onchange="renderMenuMasterTable()" style="padding: 4px 8px; font-size: 12px;">
-                                <option value="ALL">All Categories</option>
-                                <option value="FOOD">FOOD</option>
-                                <option value="LIQUOR">LIQUOR</option>
-                                <option value="NAB">NAB</option>
-                                <option value="BREWERY">BREWERY</option>
-                                <option value="TOBACCO">TOBACCO</option>
-                            </select>
-                        </div>
                         <div style="background: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 12px;">
                             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                                 <input type="text" id="menuCode" placeholder="POS Code" style="flex: 1; min-width: 100px;">
@@ -675,6 +624,7 @@
 
                 </div>
 
+                <!-- FOOD CALCULATOR SECTION -->
                 <div id="secFood" class="section-block" style="display: none;">
                     <div class="card">
                         <h2>
@@ -765,8 +715,8 @@
                     </div>
                 </div>
 
+                <!-- SETTINGS SECTION -->
                 <div id="secSettings" class="section-block" style="display: none;">
-                    
                     <div class="card">
                         <h2>🔐 Change Account Password</h2>
                         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
@@ -813,121 +763,10 @@
                     </div>
 
                     <div class="card">
-                        <h2>📦 Automated Backup & Restore</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom: 12px;">
-                            Full system backup includes: Item Master, Sub-Recipes, POS Menu, Recipes, Users, and Documents.
-                            Auto-backup runs every time you click <strong>Save All</strong> and also on a schedule.
-                        </p>
-
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px;">
-                            <button class="btn-action btn-success" onclick="downloadBackup(true)">⬇️ Download Backup Now</button>
-                            <button class="btn-action btn-warning" onclick="document.getElementById('restoreBackupInput').click()">⬆️ Restore from Backup File</button>
-                            <input type="file" id="restoreBackupInput" accept=".json,application/json" style="display:none" onchange="restoreFromBackup(event)">
-                        </div>
-
-                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom: 10px;">
-                            <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
-                                <label style="font-size:12px; font-weight:bold;">
-                                    <input type="checkbox" id="autoBackupEnabled" checked onchange="toggleAutoBackup()">
-                                    Enable Auto-Backup
-                                </label>
-                                <label style="font-size:12px; font-weight:bold;">
-                                    Interval:
-                                    <select id="autoBackupInterval" onchange="restartAutoBackup()" style="padding:4px 8px; margin-left:4px;">
-                                        <option value="5">Every 5 minutes</option>
-                                        <option value="15" selected>Every 15 minutes</option>
-                                        <option value="30">Every 30 minutes</option>
-                                        <option value="60">Every 60 minutes</option>
-                                    </select>
-                                </label>
-                                <span style="font-size:11px; color:var(--text-muted);" id="lastBackupStatus">Last backup: Never</span>
-                            </div>
-                        </div>
-
-                        <div id="backupHistory" style="font-size:12px; color:var(--text-muted);"></div>
-
-                        <hr style="border:none; border-top:1px solid var(--border); margin:18px 0;">
-
-                        <h3 style="margin:0 0 10px 0; font-size:14px;">☁️ Cloud Storage Integration</h3>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-                            Connect a folder that is synced with <strong>Google Drive</strong>, <strong>OneDrive</strong>, or <strong>Dropbox</strong>
-                            (using their desktop apps). Backups will be written directly into that folder and sync to the cloud automatically.
-                        </p>
-
-                        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:12px; margin-bottom:12px;">
-                            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:8px;">
-                                <button class="btn-action" style="background:#2563eb;" onclick="connectCloudFolder()">🔗 Connect Cloud Folder</button>
-                                <button class="btn-action btn-success" onclick="saveToCloudFolder()" id="btnSaveCloud" disabled>☁️ Save Backup to Cloud Folder</button>
-                                <button class="btn-action btn-warning" onclick="loadFromCloudFolder()" id="btnLoadCloud" disabled>📂 Load Latest from Cloud Folder</button>
-                                <button class="btn-action btn-danger" onclick="disconnectCloudFolder()" id="btnDisconnectCloud" style="display:none;">Disconnect</button>
-                            </div>
-                            <div id="cloudFolderStatus" style="font-size:12px; color:#1e40af;">
-                                Status: <strong>Not connected</strong> — Click "Connect Cloud Folder" and select a folder inside your Google Drive / OneDrive / Dropbox.
-                            </div>
-                        </div>
-
-                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:12px;">
-                            <label style="font-size:12px; font-weight:bold; display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" id="cloudAutoSync" onchange="toggleCloudAutoSync()">
-                                Auto-sync backup to cloud folder on every Save All
-                            </label>
-                            <p style="font-size:11px; color:var(--text-muted); margin:6px 0 0 0;">
-                                Requires Chrome / Edge (File System Access API). Works offline — cloud desktop app handles the upload.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h2>🌐 WebDAV Sync</h2>
-                        <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
-                            Sync backups to any WebDAV-compatible server:
-                            <strong>Nextcloud</strong>, <strong>ownCloud</strong>, <strong>Synology</strong>, <strong>TrueNAS</strong>, <strong>Box</strong>, or other NAS.
-                        </p>
-
-                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:14px; margin-bottom:12px;">
-                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                                <div style="grid-column: 1 / -1;">
-                                    <label style="font-size:11px; font-weight:bold;">WebDAV URL</label>
-                                    <input type="text" id="webdavUrl" class="text-input" placeholder="https://cloud.example.com/remote.php/dav/files/username/" style="width:100%;">
-                                </div>
-                                <div>
-                                    <label style="font-size:11px; font-weight:bold;">Username</label>
-                                    <input type="text" id="webdavUser" class="text-input" placeholder="username" style="width:100%;">
-                                </div>
-                                <div>
-                                    <label style="font-size:11px; font-weight:bold;">Password / App Password</label>
-                                    <input type="password" id="webdavPass" class="text-input" placeholder="••••••••" style="width:100%;">
-                                </div>
-                                <div style="grid-column: 1 / -1;">
-                                    <label style="font-size:11px; font-weight:bold;">Remote folder path (optional)</label>
-                                    <input type="text" id="webdavPath" class="text-input" placeholder="ARRONE_Backups/" style="width:100%;">
-                                </div>
-                            </div>
-                            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-                                <button class="btn-action" style="background:#6366f1;" onclick="saveWebdavConfig()">💾 Save Config</button>
-                                <button class="btn-action" style="background:#0ea5e9;" onclick="testWebdavConnection()">🔌 Test Connection</button>
-                                <button class="btn-action btn-success" onclick="uploadBackupToWebdav()">☁️ Upload Backup</button>
-                                <button class="btn-action btn-warning" onclick="listWebdavBackups()">📂 List Remote Backups</button>
-                            </div>
-                            <div id="webdavStatus" style="font-size:12px; margin-top:10px; color:var(--text-muted);">Status: Not configured</div>
-                        </div>
-
-                        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:10px;">
-                            <label style="font-size:12px; font-weight:bold; display:flex; align-items:center; gap:8px;">
-                                <input type="checkbox" id="webdavAutoSync" onchange="toggleWebdavAutoSync()">
-                                Auto-upload backup to WebDAV on every Save All
-                            </label>
-                        </div>
-
-                        <div id="webdavBackupList" style="font-size:12px; max-height:200px; overflow-y:auto;"></div>
-                    </div>
-
-                    <div class="card">
                         <h2>⚠️ Factory Reset / System Defaults</h2>
                         <p style="font-size:12px; color:var(--text-muted);">Reset all inventory items, recipes, and credentials to clean default demo data.</p>
                         <button class="btn-action btn-danger" onclick="resetToFactoryDefaults()">🔄 Reset to System Defaults</button>
                     </div>
-
                 </div>
 
             </div>
@@ -936,7 +775,14 @@
     </div>
 
     <script>
-        // DEFAULT DATASETS
+        // ==========================================
+        // 1. SUPABASE CLIENT CONFIGURATION
+        // ==========================================
+        const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabase.co';
+        const SUPABASE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_KEY'; // Replace with your copied sb_publishable_... key
+        const supabase = (SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+        // DEFAULT FALLBACK DATASETS
         const DEFAULT_ITEMS = [
             { code: 'CHK-01', name: 'Raw Chicken Whole', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 220.00, yieldPct: 75.0 },
             { code: 'CHK-02', name: 'Chicken Boneless Raw', cat: 'CHICKEN', purUom: 'Kg', recUom: 'Grams', conv: 1000, rate: 290.00, yieldPct: 95.0 },
@@ -976,18 +822,6 @@
             'CHICKEN': [
                 { code: 'CHK-001', name: 'Chicken Boneless', cat: 'CHICKEN', op: 10.000, pur: 15.000, cl: 5.500, act: 19.500, theo: 18.500, varQty: 1.000, rate: 220, unit: 'Kg' },
                 { code: 'CHK-002', name: 'Raw Chicken Whole', cat: 'CHICKEN', op: 8.000, pur: 12.000, cl: 3.200, act: 16.800, theo: 15.000, varQty: 1.800, rate: 220, unit: 'Kg' }
-            ],
-            'MUTTON': [
-                { code: 'MUT-001', name: 'Raw Mutton Curry Cut', cat: 'MUTTON', op: 5.000, pur: 8.000, cl: 2.100, act: 10.900, theo: 10.200, varQty: 0.700, rate: 780, unit: 'Kg' }
-            ],
-            'VEGETABLES': [
-                { code: 'VEG-001', name: 'Fresh Tomatoes', cat: 'VEGETABLES', op: 20.000, pur: 30.000, cl: 12.500, act: 37.500, theo: 35.000, varQty: 2.500, rate: 40, unit: 'Kg' }
-            ],
-            'DAIRY': [
-                { code: 'DAR-001', name: 'Amul Butter', cat: 'DAIRY', op: 4.000, pur: 6.000, cl: 1.800, act: 8.200, theo: 8.000, varQty: 0.200, rate: 540, unit: 'Kg' }
-            ],
-            'GROCERY': [
-                { code: 'GRO-001', name: 'Cooking Oil', cat: 'GROCERY', op: 15.000, pur: 20.000, cl: 8.000, act: 27.000, theo: 25.000, varQty: 2.000, rate: 120, unit: 'Litre' }
             ]
         };
 
@@ -1001,729 +835,73 @@
         let currentUser = null;
         let inactivityTimer = null;
 
-        // PERSISTENCE CONTROLLER
-        function saveAllToStorage(showNotice = false) {
-            localStorage.setItem('arrone_items', JSON.stringify(itemMasterStore));
-            localStorage.setItem('arrone_subs', JSON.stringify(subRecipeStore));
-            localStorage.setItem('arrone_pos_menu', JSON.stringify(posMenuData));
-            localStorage.setItem('arrone_users', JSON.stringify(appUsers));
-            localStorage.setItem('arrone_docs', JSON.stringify(attachedDocs));
+        // FETCH DATA LIVE FROM SUPABASE CLOUD
+        async function fetchCloudData(showPrompt = false) {
+            if (!supabase) {
+                console.warn('Supabase publishable key not set. Using local state.');
+                return;
+            }
 
-            // Also keep a last-save snapshot in localStorage for quick recovery
             try {
-                const snapshot = buildBackupObject();
-                localStorage.setItem('arrone_last_snapshot', JSON.stringify(snapshot));
-                localStorage.setItem('arrone_last_backup_time', new Date().toISOString());
-            } catch (e) { /* ignore quota issues for snapshot */ }
+                const { data: items } = await supabase.from('items_master').select('*').order('code');
+                if (items && items.length > 0) itemMasterStore = items;
+
+                const { data: subs } = await supabase.from('sub_recipes').select('*').order('code');
+                if (subs && subs.length > 0) subRecipeStore = subs;
+
+                const { data: pos } = await supabase.from('pos_menu_master').select('*').order('code');
+                if (pos && pos.length > 0) {
+                    const grouped = {};
+                    pos.forEach(p => {
+                        if (!grouped[p.category]) grouped[p.category] = [];
+                        grouped[p.category].push({
+                            code: p.code,
+                            name: p.name,
+                            cat: p.category,
+                            price: parseFloat(p.price) || 0,
+                            sold: p.sold || 0,
+                            cost: parseFloat(p.cost) || 0,
+                            pct: p.pct || '0%',
+                            recipeList: p.recipe_list || []
+                        });
+                    });
+                    posMenuData = grouped;
+                }
+
+                const { data: users } = await supabase.from('app_users').select('*');
+                if (users && users.length > 0) appUsers = users;
+
+                renderItemMasterTable();
+                renderSubRecipeTable();
+                renderMenuMasterTable();
+                renderGlobalPosTable();
+                renderMainRecipeTable();
+                renderUsersList();
+                populateSubRecipeDropdowns();
+                populateRecipePosDropdowns();
+                await fetchCloudDocuments();
+
+                if (showPrompt) alert('Synced with live Supabase database!');
+            } catch (err) {
+                console.error('Supabase sync error:', err);
+            }
+        }
+
+        function saveAllToStorage(showNotice = false) {
+            try {
+                localStorage.setItem('arrone_items', JSON.stringify(itemMasterStore));
+                localStorage.setItem('arrone_subs', JSON.stringify(subRecipeStore));
+                localStorage.setItem('arrone_pos_menu', JSON.stringify(posMenuData));
+                localStorage.setItem('arrone_users', JSON.stringify(appUsers));
+                localStorage.setItem('arrone_docs', JSON.stringify(attachedDocs));
+            } catch (e) {
+                console.error('Save failed', e);
+            }
 
             if (showNotice) {
                 alert('All Master records and configurations saved to permanent browser storage.');
             }
-
-            // Trigger silent auto-backup download if enabled and due
-            if (window._autoBackupOnSave) {
-                downloadBackup(false); // silent
-            }
-            updateLastBackupStatus();
-        }
-
-        // ========== AUTOMATED BACKUP SYSTEM ==========
-        let autoBackupTimer = null;
-        window._autoBackupOnSave = true;
-
-        function buildBackupObject() {
-            return {
-                version: '1.0',
-                app: 'ARRONE Inventory Management',
-                exportedAt: new Date().toISOString(),
-                data: {
-                    items: itemMasterStore,
-                    subs: subRecipeStore,
-                    pos_menu: posMenuData,
-                    users: appUsers,
-                    docs: attachedDocs
-                }
-            };
-        }
-
-        function downloadBackup(showAlert = true) {
-            try {
-                const backup = buildBackupObject();
-                const json = JSON.stringify(backup, null, 2);
-                const blob = new Blob([json], { type: 'application/json' });
-                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                const filename = `ARRONE_Backup_${ts}.json`;
-
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = filename;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(link.href);
-
-                localStorage.setItem('arrone_last_backup_time', new Date().toISOString());
-                localStorage.setItem('arrone_last_backup_file', filename);
-                updateLastBackupStatus();
-
-                if (showAlert) {
-                    alert(`Backup downloaded successfully!\n\nFile: ${filename}\n\nKeep this file safe. You can restore it later from Settings.`);
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Backup failed: ' + err.message);
-            }
-        }
-
-        function restoreFromBackup(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!confirm('This will OVERWRITE all current data (items, recipes, menus, users, documents) with the backup file.\n\nContinue?')) {
-                event.target.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const backup = JSON.parse(e.target.result);
-                    if (!backup || !backup.data) {
-                        throw new Error('Invalid backup file format. Expected ARRONE backup JSON.');
-                    }
-
-                    const d = backup.data;
-                    if (d.items) itemMasterStore = d.items;
-                    if (d.subs) subRecipeStore = d.subs;
-                    if (d.pos_menu) posMenuData = d.pos_menu;
-                    if (d.users) appUsers = d.users;
-                    if (d.docs) attachedDocs = d.docs;
-
-                    saveAllToStorage(false);
-
-                    // Refresh all UI
-                    if (typeof renderItemMasterTable === 'function') renderItemMasterTable();
-                    if (typeof renderSubRecipeTable === 'function') renderSubRecipeTable();
-                    if (typeof renderMenuMasterTable === 'function') renderMenuMasterTable();
-                    if (typeof renderGlobalPosTable === 'function') renderGlobalPosTable();
-                    if (typeof renderMainRecipeTable === 'function') renderMainRecipeTable();
-                    if (typeof renderUsersList === 'function') renderUsersList();
-                    if (typeof populateSubRecipeDropdowns === 'function') populateSubRecipeDropdowns();
-                    if (typeof populateRecipePosDropdowns === 'function') populateRecipePosDropdowns();
-                    if (typeof updateRecipeIngredientDropdown === 'function') updateRecipeIngredientDropdown();
-                    if (typeof loadDocumentsFromStorage === 'function') loadDocumentsFromStorage();
-            if (typeof initBackupSystem === 'function') initBackupSystem();
-                    if (typeof updateDashboardKPIs === 'function') updateDashboardKPIs();
-
-                    alert('Backup restored successfully!\n\nExported at: ' + (backup.exportedAt || 'unknown') + '\n\nPage will refresh to apply all changes.');
-                    location.reload();
-                } catch (err) {
-                    alert('Restore failed: ' + err.message);
-                }
-                event.target.value = '';
-            };
-            reader.readAsText(file);
-        }
-
-        function updateLastBackupStatus() {
-            const el = document.getElementById('lastBackupStatus');
-            if (!el) return;
-            const t = localStorage.getItem('arrone_last_backup_time');
-            const f = localStorage.getItem('arrone_last_backup_file');
-            if (t) {
-                const d = new Date(t);
-                el.innerText = 'Last backup: ' + d.toLocaleString() + (f ? ' (' + f + ')' : '');
-            } else {
-                el.innerText = 'Last backup: Never';
-            }
-        }
-
-        function toggleAutoBackup() {
-            const enabled = document.getElementById('autoBackupEnabled')?.checked;
-            window._autoBackupOnSave = !!enabled;
-            localStorage.setItem('arrone_auto_backup_enabled', enabled ? '1' : '0');
-            if (enabled) {
-                restartAutoBackup();
-            } else {
-                if (autoBackupTimer) {
-                    clearInterval(autoBackupTimer);
-                    autoBackupTimer = null;
-                }
-            }
-        }
-
-        function restartAutoBackup() {
-            if (autoBackupTimer) {
-                clearInterval(autoBackupTimer);
-                autoBackupTimer = null;
-            }
-            const enabled = document.getElementById('autoBackupEnabled')?.checked !== false;
-            if (!enabled && localStorage.getItem('arrone_auto_backup_enabled') === '0') return;
-
-            const mins = parseInt(document.getElementById('autoBackupInterval')?.value || localStorage.getItem('arrone_auto_backup_mins') || '15', 10);
-            localStorage.setItem('arrone_auto_backup_mins', String(mins));
-
-            // Auto-download backup every N minutes while the app is open
-            autoBackupTimer = setInterval(() => {
-                if (currentUser) {
-                    downloadBackup(false); // silent periodic backup
-                    console.log('[ARRONE] Auto-backup completed at', new Date().toLocaleTimeString());
-                }
-            }, mins * 60 * 1000);
-
-            console.log('[ARRONE] Auto-backup scheduled every', mins, 'minutes');
-        }
-
-
-        // ========== CLOUD STORAGE INTEGRATION (File System Access API) ==========
-        // Works with any local folder synced by Google Drive / OneDrive / Dropbox desktop apps.
-        let cloudDirHandle = null;
-        const CLOUD_DB_NAME = 'arrone_cloud_handles';
-        const CLOUD_STORE = 'handles';
-
-        async function openCloudHandleDB() {
-            return new Promise((resolve, reject) => {
-                const req = indexedDB.open(CLOUD_DB_NAME, 1);
-                req.onupgradeneeded = () => req.result.createObjectStore(CLOUD_STORE);
-                req.onsuccess = () => resolve(req.result);
-                req.onerror = () => reject(req.error);
-            });
-        }
-
-        async function persistCloudHandle(handle) {
-            try {
-                const db = await openCloudHandleDB();
-                const tx = db.transaction(CLOUD_STORE, 'readwrite');
-                tx.objectStore(CLOUD_STORE).put(handle, 'cloudFolder');
-                await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-            } catch (e) {
-                console.warn('Could not persist folder handle', e);
-            }
-        }
-
-        async function loadPersistedCloudHandle() {
-            try {
-                const db = await openCloudHandleDB();
-                const tx = db.transaction(CLOUD_STORE, 'readonly');
-                const req = tx.objectStore(CLOUD_STORE).get('cloudFolder');
-                const handle = await new Promise((res, rej) => {
-                    req.onsuccess = () => res(req.result);
-                    req.onerror = () => rej(req.error);
-                });
-                return handle || null;
-            } catch (e) {
-                return null;
-            }
-        }
-
-        async function ensureCloudPermission(handle) {
-            if (!handle) return false;
-            const opts = { mode: 'readwrite' };
-            if ((await handle.queryPermission(opts)) === 'granted') return true;
-            if ((await handle.requestPermission(opts)) === 'granted') return true;
-            return false;
-        }
-
-        function updateCloudUI() {
-            const status = document.getElementById('cloudFolderStatus');
-            const btnSave = document.getElementById('btnSaveCloud');
-            const btnLoad = document.getElementById('btnLoadCloud');
-            const btnDisc = document.getElementById('btnDisconnectCloud');
-            const autoCb = document.getElementById('cloudAutoSync');
-
-            if (cloudDirHandle) {
-                if (status) status.innerHTML = `Status: <strong style="color:#166534;">Connected</strong> — Folder: <em>${cloudDirHandle.name}</em>`;
-                if (btnSave) btnSave.disabled = false;
-                if (btnLoad) btnLoad.disabled = false;
-                if (btnDisc) btnDisc.style.display = 'inline-block';
-            } else {
-                if (status) status.innerHTML = 'Status: <strong>Not connected</strong> — Click "Connect Cloud Folder" and select a folder inside your Google Drive / OneDrive / Dropbox.';
-                if (btnSave) btnSave.disabled = true;
-                if (btnLoad) btnLoad.disabled = true;
-                if (btnDisc) btnDisc.style.display = 'none';
-            }
-            if (autoCb) {
-                autoCb.checked = localStorage.getItem('arrone_cloud_auto_sync') === '1';
-            }
-        }
-
-        async function connectCloudFolder() {
-            if (!window.showDirectoryPicker) {
-                alert('Cloud folder sync requires Chrome or Edge browser (File System Access API).\n\nOn other browsers, use "Download Backup Now" and save the file into your Google Drive / OneDrive / Dropbox folder manually.');
-                return;
-            }
-            try {
-                const handle = await window.showDirectoryPicker({ mode: 'readwrite', id: 'arrone-cloud-backup' });
-                cloudDirHandle = handle;
-                await persistCloudHandle(handle);
-                updateCloudUI();
-                alert('Cloud folder connected: "' + handle.name + '"\n\nTip: Choose a folder that is inside your Google Drive, OneDrive, or Dropbox so files sync automatically.');
-            } catch (e) {
-                if (e.name !== 'AbortError') {
-                    alert('Could not connect folder: ' + e.message);
-                }
-            }
-        }
-
-        async function disconnectCloudFolder() {
-            cloudDirHandle = null;
-            try {
-                const db = await openCloudHandleDB();
-                const tx = db.transaction(CLOUD_STORE, 'readwrite');
-                tx.objectStore(CLOUD_STORE).delete('cloudFolder');
-            } catch (e) {}
-            localStorage.setItem('arrone_cloud_auto_sync', '0');
-            updateCloudUI();
-            alert('Cloud folder disconnected.');
-        }
-
-        async function saveToCloudFolder(silent = false) {
-            if (!cloudDirHandle) {
-                if (!silent) alert('Please connect a cloud folder first.');
-                return false;
-            }
-            const ok = await ensureCloudPermission(cloudDirHandle);
-            if (!ok) {
-                if (!silent) alert('Permission denied for cloud folder. Please reconnect.');
-                cloudDirHandle = null;
-                updateCloudUI();
-                return false;
-            }
-            try {
-                const backup = buildBackupObject();
-                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                const filename = `ARRONE_Backup_${ts}.json`;
-                const latestName = 'ARRONE_Backup_LATEST.json';
-
-                // Write timestamped file
-                const fileHandle = await cloudDirHandle.getFileHandle(filename, { create: true });
-                const writable = await fileHandle.createWritable();
-                await writable.write(JSON.stringify(backup, null, 2));
-                await writable.close();
-
-                // Also overwrite LATEST for easy restore
-                const latestHandle = await cloudDirHandle.getFileHandle(latestName, { create: true });
-                const latestWritable = await latestHandle.createWritable();
-                await latestWritable.write(JSON.stringify(backup, null, 2));
-                await latestWritable.close();
-
-                localStorage.setItem('arrone_last_backup_time', new Date().toISOString());
-                localStorage.setItem('arrone_last_backup_file', filename + ' (cloud)');
-                if (typeof updateLastBackupStatus === 'function') updateLastBackupStatus();
-
-                if (!silent) {
-                    alert('Backup saved to cloud folder!\n\nFiles:\n• ' + filename + '\n• ' + latestName + '\n\nIf this folder is synced with Google Drive / OneDrive / Dropbox, the file will upload automatically.');
-                }
-                return true;
-            } catch (e) {
-                console.error(e);
-                if (!silent) alert('Cloud save failed: ' + e.message);
-                return false;
-            }
-        }
-
-        async function loadFromCloudFolder() {
-            if (!cloudDirHandle) {
-                alert('Please connect a cloud folder first.');
-                return;
-            }
-            const ok = await ensureCloudPermission(cloudDirHandle);
-            if (!ok) {
-                alert('Permission denied. Please reconnect the cloud folder.');
-                return;
-            }
-            try {
-                // Prefer LATEST file
-                let fileHandle;
-                try {
-                    fileHandle = await cloudDirHandle.getFileHandle('ARRONE_Backup_LATEST.json');
-                } catch (e) {
-                    // Fall back: list and pick newest ARRONE_Backup_*.json
-                    const backups = [];
-                    for await (const entry of cloudDirHandle.values()) {
-                        if (entry.kind === 'file' && entry.name.startsWith('ARRONE_Backup_') && entry.name.endsWith('.json')) {
-                            backups.push(entry);
-                        }
-                    }
-                    if (backups.length === 0) {
-                        alert('No ARRONE backup files found in the connected folder.');
-                        return;
-                    }
-                    backups.sort((a, b) => b.name.localeCompare(a.name));
-                    fileHandle = backups[0];
-                }
-
-                const file = await fileHandle.getFile();
-                const text = await file.text();
-                const backup = JSON.parse(text);
-
-                if (!backup || !backup.data) {
-                    throw new Error('Invalid backup file format.');
-                }
-
-                if (!confirm('Restore from cloud backup?\n\nFile: ' + file.name + '\nExported: ' + (backup.exportedAt || 'unknown') + '\n\nThis will OVERWRITE all current data.')) {
-                    return;
-                }
-
-                const d = backup.data;
-                if (d.items) itemMasterStore = d.items;
-                if (d.subs) subRecipeStore = d.subs;
-                if (d.pos_menu) posMenuData = d.pos_menu;
-                if (d.users) appUsers = d.users;
-                if (d.docs) attachedDocs = d.docs;
-
-                saveAllToStorage(false);
-                alert('Cloud backup restored successfully. Reloading...');
-                location.reload();
-            } catch (e) {
-                alert('Load from cloud failed: ' + e.message);
-            }
-        }
-
-        function toggleCloudAutoSync() {
-            const enabled = document.getElementById('cloudAutoSync')?.checked;
-            localStorage.setItem('arrone_cloud_auto_sync', enabled ? '1' : '0');
-        }
-
-        async function initCloudStorage() {
-            // Try to restore previously connected folder handle
-            const handle = await loadPersistedCloudHandle();
-            if (handle) {
-                const ok = await ensureCloudPermission(handle);
-                if (ok) {
-                    cloudDirHandle = handle;
-                }
-            }
-            updateCloudUI();
-        }
-
-        // Hook into saveAllToStorage: if cloud auto-sync is on, also write to cloud folder
-        const _origSaveAllToStorage = saveAllToStorage;
-        saveAllToStorage = function(showNotice = false) {
-            _origSaveAllToStorage(showNotice);
-            if (localStorage.getItem('arrone_cloud_auto_sync') === '1' && cloudDirHandle) {
-                saveToCloudFolder(true); // silent
-            }
-        };
-
-
-        // ========== WEBDAV SYNC SUPPORT ==========
-        function getWebdavConfig() {
-            return {
-                url: (localStorage.getItem('arrone_webdav_url') || '').replace(/\/?$/, '/'),
-                user: localStorage.getItem('arrone_webdav_user') || '',
-                pass: localStorage.getItem('arrone_webdav_pass') || '',
-                path: (localStorage.getItem('arrone_webdav_path') || 'ARRONE_Backups/').replace(/^\/+/, '').replace(/\/?$/, '/')
-            };
-        }
-
-        function saveWebdavConfig() {
-            const url = (document.getElementById('webdavUrl')?.value || '').trim();
-            const user = (document.getElementById('webdavUser')?.value || '').trim();
-            const pass = document.getElementById('webdavPass')?.value || '';
-            const path = (document.getElementById('webdavPath')?.value || 'ARRONE_Backups/').trim();
-
-            if (!url) {
-                alert('Please enter the WebDAV URL.');
-                return;
-            }
-            localStorage.setItem('arrone_webdav_url', url);
-            localStorage.setItem('arrone_webdav_user', user);
-            localStorage.setItem('arrone_webdav_pass', pass);
-            localStorage.setItem('arrone_webdav_path', path);
-            updateWebdavStatus();
-            alert('WebDAV configuration saved.');
-        }
-
-        function loadWebdavConfigToForm() {
-            const cfg = getWebdavConfig();
-            const urlEl = document.getElementById('webdavUrl');
-            const userEl = document.getElementById('webdavUser');
-            const passEl = document.getElementById('webdavPass');
-            const pathEl = document.getElementById('webdavPath');
-            const autoEl = document.getElementById('webdavAutoSync');
-            if (urlEl) urlEl.value = localStorage.getItem('arrone_webdav_url') || '';
-            if (userEl) userEl.value = cfg.user;
-            if (passEl) passEl.value = cfg.pass;
-            if (pathEl) pathEl.value = localStorage.getItem('arrone_webdav_path') || 'ARRONE_Backups/';
-            if (autoEl) autoEl.checked = localStorage.getItem('arrone_webdav_auto_sync') === '1';
-            updateWebdavStatus();
-        }
-
-        function updateWebdavStatus(msg) {
-            const el = document.getElementById('webdavStatus');
-            if (!el) return;
-            if (msg) {
-                el.innerHTML = msg;
-                return;
-            }
-            const cfg = getWebdavConfig();
-            if (cfg.url && cfg.user) {
-                el.innerHTML = `Status: <strong style="color:#166534;">Configured</strong> — ${cfg.url}${cfg.path}`;
-            } else {
-                el.innerHTML = 'Status: <strong>Not configured</strong>';
-            }
-        }
-
-        function webdavAuthHeader(cfg) {
-            return 'Basic ' + btoa(unescape(encodeURIComponent(cfg.user + ':' + cfg.pass)));
-        }
-
-        function webdavFullUrl(cfg, filename) {
-            // cfg.url already ends with /
-            const base = cfg.url;
-            const folder = cfg.path || '';
-            if (filename) return base + folder + filename;
-            return base + folder;
-        }
-
-        async function webdavEnsureFolder(cfg) {
-            // Try to create the remote folder (MKCOL). Ignore if already exists.
-            const folderUrl = webdavFullUrl(cfg, '');
-            try {
-                await fetch(folderUrl, {
-                    method: 'MKCOL',
-                    headers: { 'Authorization': webdavAuthHeader(cfg) }
-                });
-            } catch (e) {
-                // Network or CORS may fail; continue — folder may already exist
-            }
-        }
-
-        async function testWebdavConnection() {
-            const cfg = getWebdavConfig();
-            // Prefer form values if present (not yet saved)
-            const formUrl = (document.getElementById('webdavUrl')?.value || '').trim();
-            const formUser = (document.getElementById('webdavUser')?.value || '').trim();
-            const formPass = document.getElementById('webdavPass')?.value || '';
-            if (formUrl) cfg.url = formUrl.replace(/\/?$/, '/');
-            if (formUser) cfg.user = formUser;
-            if (formPass) cfg.pass = formPass;
-
-            if (!cfg.url) {
-                alert('Enter WebDAV URL first.');
-                return;
-            }
-            updateWebdavStatus('Status: <em>Testing connection…</em>');
-            try {
-                const res = await fetch(cfg.url, {
-                    method: 'PROPFIND',
-                    headers: {
-                        'Authorization': webdavAuthHeader(cfg),
-                        'Depth': '0',
-                        'Content-Type': 'application/xml'
-                    },
-                    body: '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:resourcetype/></d:prop></d:propfind>'
-                });
-                if (res.ok || res.status === 207) {
-                    updateWebdavStatus('Status: <strong style="color:#166534;">✓ Connection successful</strong> — ' + cfg.url);
-                    alert('WebDAV connection successful!\n\nServer responded with status ' + res.status);
-                } else if (res.status === 401) {
-                    updateWebdavStatus('Status: <strong style="color:#dc2626;">Authentication failed</strong>');
-                    alert('Authentication failed (401). Check username and password / app password.');
-                } else {
-                    updateWebdavStatus('Status: <strong style="color:#d97706;">Response ' + res.status + '</strong>');
-                    alert('Server responded with HTTP ' + res.status + '.\n\nIf this is CORS-related, the server must allow browser requests, or use a browser extension / reverse proxy.');
-                }
-            } catch (e) {
-                updateWebdavStatus('Status: <strong style="color:#dc2626;">Network / CORS error</strong>');
-                alert('Connection failed: ' + e.message + '\n\nNote: Many WebDAV servers block browser requests (CORS). Solutions:\n• Use Nextcloud with proper CORS headers\n• Use a local reverse proxy\n• Or use the Cloud Folder method instead');
-            }
-        }
-
-        async function uploadBackupToWebdav(silent = false) {
-            const cfg = getWebdavConfig();
-            if (!cfg.url || !cfg.user) {
-                if (!silent) alert('Configure and save WebDAV settings first.');
-                return false;
-            }
-            try {
-                await webdavEnsureFolder(cfg);
-                const backup = buildBackupObject();
-                const json = JSON.stringify(backup, null, 2);
-                const ts = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-                const filename = `ARRONE_Backup_${ts}.json`;
-                const latestName = 'ARRONE_Backup_LATEST.json';
-
-                for (const name of [filename, latestName]) {
-                    const res = await fetch(webdavFullUrl(cfg, name), {
-                        method: 'PUT',
-                        headers: {
-                            'Authorization': webdavAuthHeader(cfg),
-                            'Content-Type': 'application/json'
-                        },
-                        body: json
-                    });
-                    if (!res.ok && res.status !== 201 && res.status !== 204) {
-                        throw new Error('Upload failed for ' + name + ' — HTTP ' + res.status);
-                    }
-                }
-
-                localStorage.setItem('arrone_last_backup_time', new Date().toISOString());
-                localStorage.setItem('arrone_last_backup_file', filename + ' (WebDAV)');
-                if (typeof updateLastBackupStatus === 'function') updateLastBackupStatus();
-                updateWebdavStatus('Status: <strong style="color:#166534;">✓ Uploaded</strong> — ' + filename);
-
-                if (!silent) {
-                    alert('Backup uploaded to WebDAV successfully!\n\n• ' + filename + '\n• ' + latestName);
-                }
-                return true;
-            } catch (e) {
-                console.error(e);
-                updateWebdavStatus('Status: <strong style="color:#dc2626;">Upload failed</strong>');
-                if (!silent) alert('WebDAV upload failed: ' + e.message);
-                return false;
-            }
-        }
-
-        async function listWebdavBackups() {
-            const cfg = getWebdavConfig();
-            if (!cfg.url || !cfg.user) {
-                alert('Configure WebDAV first.');
-                return;
-            }
-            const listEl = document.getElementById('webdavBackupList');
-            if (listEl) listEl.innerHTML = '<em>Loading remote backups…</em>';
-            updateWebdavStatus('Status: <em>Listing remote files…</em>');
-
-            try {
-                const res = await fetch(webdavFullUrl(cfg, ''), {
-                    method: 'PROPFIND',
-                    headers: {
-                        'Authorization': webdavAuthHeader(cfg),
-                        'Depth': '1',
-                        'Content-Type': 'application/xml'
-                    },
-                    body: '<?xml version="1.0"?><d:propfind xmlns:d="DAV:"><d:prop><d:displayname/><d:getlastmodified/><d:getcontentlength/></d:prop></d:propfind>'
-                });
-
-                if (!res.ok && res.status !== 207) {
-                    throw new Error('HTTP ' + res.status);
-                }
-
-                const xmlText = await res.text();
-                const parser = new DOMParser();
-                const xml = parser.parseFromString(xmlText, 'application/xml');
-                const responses = xml.getElementsByTagNameNS('DAV:', 'response');
-                // Fallback without namespace
-                const responses2 = responses.length ? responses : xml.getElementsByTagName('d:response');
-                const responses3 = responses2.length ? responses2 : xml.getElementsByTagName('response');
-
-                const files = [];
-                for (let i = 0; i < responses3.length; i++) {
-                    const hrefNodes = responses3[i].getElementsByTagNameNS('DAV:', 'href');
-                    const hrefNodes2 = hrefNodes.length ? hrefNodes : responses3[i].getElementsByTagName('d:href');
-                    const hrefNodes3 = hrefNodes2.length ? hrefNodes2 : responses3[i].getElementsByTagName('href');
-                    if (!hrefNodes3.length) continue;
-                    let href = hrefNodes3[0].textContent || '';
-                    const name = decodeURIComponent(href.split('/').filter(Boolean).pop() || '');
-                    if (name.startsWith('ARRONE_Backup_') && name.endsWith('.json')) {
-                        files.push(name);
-                    }
-                }
-
-                files.sort().reverse();
-                if (listEl) {
-                    if (files.length === 0) {
-                        listEl.innerHTML = '<em style="color:var(--text-muted);">No ARRONE backup files found on the server.</em>';
-                    } else {
-                        listEl.innerHTML = '<strong>Remote backups:</strong><ul style="margin:6px 0; padding-left:18px;">' +
-                            files.map(f => `<li style="margin:4px 0;">
-                                <code>${f}</code>
-                                <button class="btn-action btn-warning" style="padding:2px 8px;font-size:11px;margin-left:8px;" onclick="restoreFromWebdav('${f.replace(/'/g, "\\'")}')">Restore</button>
-                            </li>`).join('') + '</ul>';
-                    }
-                }
-                updateWebdavStatus('Status: <strong style="color:#166534;">✓ Listed ' + files.length + ' backup(s)</strong>');
-            } catch (e) {
-                if (listEl) listEl.innerHTML = '<span style="color:var(--danger);">List failed: ' + e.message + '</span>';
-                updateWebdavStatus('Status: <strong style="color:#dc2626;">List failed</strong>');
-                alert('Could not list WebDAV files: ' + e.message + '\n\nCORS may be blocking browser access to this server.');
-            }
-        }
-
-        async function restoreFromWebdav(filename) {
-            const cfg = getWebdavConfig();
-            if (!cfg.url || !cfg.user) {
-                alert('Configure WebDAV first.');
-                return;
-            }
-            if (!confirm('Restore from WebDAV backup?\n\nFile: ' + filename + '\n\nThis will OVERWRITE all current data.')) return;
-
-            try {
-                updateWebdavStatus('Status: <em>Downloading ' + filename + '…</em>');
-                const res = await fetch(webdavFullUrl(cfg, filename), {
-                    method: 'GET',
-                    headers: { 'Authorization': webdavAuthHeader(cfg) }
-                });
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                const backup = await res.json();
-                if (!backup || !backup.data) throw new Error('Invalid backup format');
-
-                const d = backup.data;
-                if (d.items) itemMasterStore = d.items;
-                if (d.subs) subRecipeStore = d.subs;
-                if (d.pos_menu) posMenuData = d.pos_menu;
-                if (d.users) appUsers = d.users;
-                if (d.docs) attachedDocs = d.docs;
-
-                saveAllToStorage(false);
-                alert('WebDAV backup restored successfully. Reloading…');
-                location.reload();
-            } catch (e) {
-                alert('Restore from WebDAV failed: ' + e.message);
-                updateWebdavStatus('Status: <strong style="color:#dc2626;">Restore failed</strong>');
-            }
-        }
-
-        function toggleWebdavAutoSync() {
-            const enabled = document.getElementById('webdavAutoSync')?.checked;
-            localStorage.setItem('arrone_webdav_auto_sync', enabled ? '1' : '0');
-        }
-
-        function initWebdav() {
-            loadWebdavConfigToForm();
-        }
-
-        // Hook auto-upload into saveAllToStorage (chain after cloud hook if present)
-        (function() {
-            const prevSave = saveAllToStorage;
-            saveAllToStorage = function(showNotice = false) {
-                prevSave(showNotice);
-                if (localStorage.getItem('arrone_webdav_auto_sync') === '1') {
-                    uploadBackupToWebdav(true); // silent
-                }
-            };
-        })();
-
-        function initBackupSystem() {
-            // Restore checkbox / interval from storage
-            const enabled = localStorage.getItem('arrone_auto_backup_enabled') !== '0';
-            const mins = localStorage.getItem('arrone_auto_backup_mins') || '15';
-            const cb = document.getElementById('autoBackupEnabled');
-            const sel = document.getElementById('autoBackupInterval');
-            if (cb) cb.checked = enabled;
-            if (sel) sel.value = mins;
-            window._autoBackupOnSave = enabled;
-            updateLastBackupStatus();
-            if (enabled) restartAutoBackup();
-            // Also init cloud folder connection
-            if (typeof initCloudStorage === 'function') initCloudStorage();
-            if (typeof initWebdav === 'function') initWebdav();
-        }
-
-
-        function resetToFactoryDefaults() {
-            if (confirm('Warning: This will overwrite your current masters with system default data. Proceed?')) {
-                localStorage.clear();
-                itemMasterStore = DEFAULT_ITEMS;
-                subRecipeStore = DEFAULT_SUBS;
-                posMenuData = DEFAULT_POS_MENU;
-                appUsers = DEFAULT_USERS;
-                attachedDocs = [];
-                saveAllToStorage(false);
-                location.reload();
-            }
+            return true;
         }
 
         function resetInactivityTimer() {
@@ -1739,7 +917,8 @@
         window.addEventListener('mousemove', resetInactivityTimer);
         window.addEventListener('keypress', resetInactivityTimer);
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
+            await fetchCloudData(false);
             renderItemMasterTable();
             renderSubRecipeTable();
             renderMenuMasterTable();
@@ -1750,15 +929,34 @@
             populateRecipePosDropdowns();
             updateRecipeIngredientDropdown();
             loadDocumentsFromStorage();
-            if (typeof initBackupSystem === 'function') initBackupSystem();
         });
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('userIdInput').value.trim().toLowerCase();
             const password = document.getElementById('userPasswordInput').value;
-            const foundUser = appUsers.find(u => u.id === username && u.pass === password);
 
+            if (supabase) {
+                const { data: user } = await supabase
+                    .from('app_users')
+                    .select('*')
+                    .eq('id', username)
+                    .eq('pass', password)
+                    .single();
+
+                if (user) {
+                    currentUser = { username: user.id, fullName: user.name, role: user.role };
+                    document.getElementById('loginOverlay').style.display = 'none';
+                    document.getElementById('appContainer').style.display = 'flex';
+                    document.getElementById('currentUsername').innerText = currentUser.fullName;
+                    document.getElementById('currentUserRole').innerText = currentUser.role;
+                    resetInactivityTimer();
+                    showDashboard();
+                    return;
+                }
+            }
+
+            const foundUser = appUsers.find(u => u.id === username && u.pass === password);
             if (foundUser) {
                 currentUser = { username: foundUser.id, fullName: foundUser.name, role: foundUser.role };
                 document.getElementById('loginOverlay').style.display = 'none';
@@ -1766,7 +964,6 @@
                 document.getElementById('currentUsername').innerText = currentUser.fullName;
                 document.getElementById('currentUserRole').innerText = currentUser.role;
                 resetInactivityTimer();
-                if (typeof initBackupSystem === 'function') initBackupSystem();
                 showDashboard();
             } else {
                 document.getElementById('loginError').innerText = 'Invalid User ID or Password.';
@@ -1786,43 +983,27 @@
         }
 
         function switchSection(secKey, element) {
-            const sections = document.querySelectorAll('.section-block');
-            sections.forEach(s => s.style.display = 'none');
-
+            document.querySelectorAll('.section-block').forEach(s => s.style.display = 'none');
             if (element) {
                 document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
                 element.classList.add('active');
             }
 
-            const targetMap = {
+            const map = {
                 'dashboard': 'secDashboard',
                 'itemwiseReport': 'secItemwiseReport',
                 'bcgMatrix': 'secBcgMatrix',
                 'masters': 'secMasters',
-                'sales': 'secSales',
                 'food': 'secFood',
-                'audit': 'secAudit',
                 'settings': 'secSettings',
                 'docVault': 'secDocVault'
             };
 
-            const targetId = targetMap[secKey];
+            const targetId = map[secKey];
             if (targetId) {
-                const el = document.getElementById(targetId);
-                if (el) {
-                    el.style.display = 'block';
-                    if (secKey === 'bcgMatrix' && typeof renderBcgMatrix === 'function') {
-                        renderBcgMatrix();
-                    }
-                    if (secKey === 'itemwiseReport' && typeof renderItemwiseReport === 'function') {
-                        renderItemwiseReport();
-                    }
-                    if (secKey === 'food') {
-                        if (typeof updateFoodIngredientDropdown === 'function') updateFoodIngredientDropdown();
-                        if (typeof renderFoodIngredientsTable === 'function') renderFoodIngredientsTable();
-                        if (typeof calculateFoodRecipe === 'function') calculateFoodRecipe();
-                    }
-                }
+                document.getElementById(targetId).style.display = 'block';
+                if (secKey === 'bcgMatrix') renderBcgMatrix();
+                if (secKey === 'itemwiseReport') renderItemwiseReport();
             }
         }
 
@@ -1843,170 +1024,93 @@
                     targetCard.style.display = 'block';
                     targetCard.scrollIntoView({ behavior: 'smooth' });
                 }
-
-                const btnIndex = { 'secGlobalPosList': 1, 'secItemMaster': 2, 'secSubRecipeMaster': 3, 'secMainRecipeMaster': 4, 'secMenuMaster': 5 };
-                if (btnIndex[targetMasterId] && masterBtns[btnIndex[targetMasterId]]) {
-                    masterBtns[btnIndex[targetMasterId]].classList.add('active');
-                }
             }
         }
 
-        // PASSWORD CHANGE CONTROLLER (SAVES PERSISTENTLY)
-        function changeUserPassword() {
-            const curr = document.getElementById('currPasswordInput').value;
-            const newP = document.getElementById('newPasswordInput').value;
-            const confP = document.getElementById('confirmPasswordInput').value;
-            const msgEl = document.getElementById('pwdMsg');
-
-            if (!currentUser) return;
-
-            const userObj = appUsers.find(u => u.id === currentUser.username);
-
-            if (!userObj || userObj.pass !== curr) {
-                msgEl.style.color = 'var(--danger)';
-                msgEl.innerText = 'Current password is incorrect.';
-                return;
-            }
-
-            if (!newP || newP.length < 4) {
-                msgEl.style.color = 'var(--danger)';
-                msgEl.innerText = 'New password must be at least 4 characters long.';
-                return;
-            }
-
-            if (newP !== confP) {
-                msgEl.style.color = 'var(--danger)';
-                msgEl.innerText = 'New password and confirmation do not match.';
-                return;
-            }
-
-            userObj.pass = newP;
-            saveAllToStorage(false);
-
-            msgEl.style.color = 'var(--success)';
-            msgEl.innerText = `Password for '${userObj.name}' updated successfully!`;
-
-            document.getElementById('currPasswordInput').value = '';
-            document.getElementById('newPasswordInput').value = '';
-            document.getElementById('confirmPasswordInput').value = '';
-        }
-
-        function saveUserPermissions() {
-            const id = document.getElementById('settingUserId').value.trim().toLowerCase();
-            const name = document.getElementById('settingFullName').value.trim();
-            const pass = document.getElementById('settingPassword').value;
-            const role = document.getElementById('settingRole').value;
-
-            if (!id || !name || !pass) return alert('Enter User ID, Full Name, and Initial Password.');
-
-            const existingIndex = appUsers.findIndex(u => u.id === id);
-            if (existingIndex >= 0) {
-                appUsers[existingIndex] = { id, name, role, pass };
-            } else {
-                appUsers.push({ id, name, role, pass });
-            }
-
-            saveAllToStorage(false);
-            renderUsersList();
-
-            document.getElementById('settingUserId').value = '';
-            document.getElementById('settingFullName').value = '';
-            document.getElementById('settingPassword').value = '';
-
-            alert(`User account '${name}' saved successfully!`);
-        }
-
-        function renderUsersList() {
-            const tbody = document.getElementById('usersListTbody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            appUsers.forEach((u, i) => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${u.id}</strong></td>
-                        <td>${u.name}</td>
-                        <td><span class="badge">${u.role}</span></td>
-                        <td>${u.id === 'admin' ? '<em>Root Administrator</em>' : `<button class="btn-action btn-danger" onclick="deleteUser(${i})">Delete</button>`}</td>
-                    </tr>
-                `;
-            });
-        }
-
-        function deleteUser(i) {
-            if (confirm(`Delete user account '${appUsers[i].name}'?`)) {
-                appUsers.splice(i, 1);
-                saveAllToStorage(false);
-                renderUsersList();
-            }
-        }
-
-        // FILE ATTACHMENT WITH BASE64 STORAGE & RETRIEVAL
-        function handleDocumentUpload(event) {
+        // SUPABASE STORAGE FOR ATTACHED DOCUMENTS
+        async function uploadFileToSupabase(event) {
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
-            let loaded = 0;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                const reader = new FileReader();
-
-                reader.onload = function(e) {
-                    attachedDocs.push({
-                        name: file.name,
-                        size: (file.size / 1024).toFixed(1) + ' KB',
-                        type: file.type || 'application/octet-stream',
-                        date: new Date().toLocaleDateString(),
-                        dataUrl: e.target.result
-                    });
-                    loaded++;
-
-                    if (loaded === files.length) {
-                        saveAllToStorage(false);
-                        loadDocumentsFromStorage();
-            if (typeof initBackupSystem === 'function') initBackupSystem();
-                        alert(`Successfully stored ${loaded} document(s)!`);
-                    }
-                };
-
-                reader.readAsDataURL(file);
+            if (supabase) {
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const filePath = `documents/${Date.now()}_${file.name}`;
+                    const { error } = await supabase.storage.from('recipe_documents').upload(filePath, file);
+                    if (error) console.error('Cloud upload error:', error);
+                }
+                await fetchCloudDocuments();
+                alert('Uploaded to Supabase Cloud Storage!');
+            } else {
+                handleDocumentUpload(event);
             }
             event.target.value = '';
         }
 
-        function loadDocumentsFromStorage() {
+        async function fetchCloudDocuments() {
+            if (!supabase) return;
+            const { data: files } = await supabase.storage.from('recipe_documents').list('documents');
             const container = document.getElementById('uploadedDocsList');
             if (!container) return;
 
-            if (attachedDocs.length === 0) {
-                container.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); text-align: center;">No documents attached yet.</p>';
+            if (!files || files.length === 0) {
+                container.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); text-align: center;">No documents in cloud storage.</p>';
                 return;
             }
 
             container.innerHTML = '';
-            attachedDocs.forEach((doc, idx) => {
+            files.forEach(f => {
+                const { data } = supabase.storage.from('recipe_documents').getPublicUrl(`documents/${f.name}`);
                 container.innerHTML += `
                     <div class="doc-item">
-                        <div>📄 <strong>${doc.name}</strong> <small style="color:var(--text-muted);">(${doc.size}) - Uploaded ${doc.date}</small></div>
-                        <div style="display: flex; gap: 6px;">
-                            <a href="${doc.dataUrl}" download="${doc.name}" class="btn-action btn-success" style="text-decoration:none; padding:4px 8px; font-size:11px;">⬇️ Download</a>
-                            <button class="btn-action btn-danger" style="padding:4px 8px; font-size:11px;" onclick="removeDocument(${idx})">Delete</button>
-                        </div>
+                        <div>📄 <strong>${f.name}</strong></div>
+                        <a href="${data.publicUrl}" target="_blank" class="btn-action btn-success" style="text-decoration:none; padding:4px 8px; font-size:11px;">⬇️ Open / Download</a>
                     </div>
                 `;
             });
         }
 
-        function removeDocument(idx) {
-            if (confirm(`Remove document '${attachedDocs[idx].name}'?`)) {
-                attachedDocs.splice(idx, 1);
-                saveAllToStorage(false);
-                loadDocumentsFromStorage();
-            if (typeof initBackupSystem === 'function') initBackupSystem();
+        function handleDocumentUpload(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    attachedDocs.push({
+                        name: file.name,
+                        size: (file.size / 1024).toFixed(1) + ' KB',
+                        date: new Date().toLocaleDateString(),
+                        dataUrl: e.target.result
+                    });
+                    saveAllToStorage(false);
+                    loadDocumentsFromStorage();
+                };
+                reader.readAsDataURL(file);
             }
         }
 
-        // 1. ITEM MASTER OPERATIONS
-        function executeAddItemMaster() {
+        function loadDocumentsFromStorage() {
+            if (supabase) { fetchCloudDocuments(); return; }
+            const container = document.getElementById('uploadedDocsList');
+            if (!container) return;
+            if (attachedDocs.length === 0) {
+                container.innerHTML = '<p style="font-size: 13px; color: var(--text-muted); text-align: center;">No documents attached yet.</p>';
+                return;
+            }
+            container.innerHTML = '';
+            attachedDocs.forEach((doc, idx) => {
+                container.innerHTML += `
+                    <div class="doc-item">
+                        <div>📄 <strong>${doc.name}</strong> <small style="color:var(--text-muted);">(${doc.size})</small></div>
+                        <a href="${doc.dataUrl}" download="${doc.name}" class="btn-action btn-success" style="text-decoration:none; padding:4px 8px; font-size:11px;">⬇️ Download</a>
+                    </div>
+                `;
+            });
+        }
+
+        // ITEM MASTER
+        async function executeAddItemMaster() {
             const code = document.getElementById('addCode').value.trim().toUpperCase();
             const name = document.getElementById('addName').value.trim();
             const cat = document.getElementById('addCat').value;
@@ -2015,76 +1119,32 @@
             const conv = parseFloat(document.getElementById('addConv').value) || 1000;
             const rate = parseFloat(document.getElementById('addRate').value) || 0;
             const yieldPct = parseFloat(document.getElementById('addYield').value) || 100;
-            const editIdx = parseInt(document.getElementById('itemEditIndex').value);
 
-            if (!code || !name) return alert('Please fill in Item Code and Description.');
+            if (!code || !name) return alert('Enter Item Code and Description.');
 
-            const obj = { code, name, cat, purUom, recUom, conv, rate, yieldPct };
+            const itemObj = { code, name, cat, purUom, recUom, conv, rate, yieldPct };
+            const existingIdx = itemMasterStore.findIndex(i => i.code === code);
+            if (existingIdx >= 0) itemMasterStore[existingIdx] = itemObj;
+            else itemMasterStore.push(itemObj);
 
-            if (editIdx >= 0) {
-                // Full update of existing item
-                itemMasterStore[editIdx] = obj;
-                alert(`Item '${name}' updated successfully!`);
-            } else {
-                const existingIdx = itemMasterStore.findIndex(i => i.code === code);
-                if (existingIdx >= 0) {
-                    itemMasterStore[existingIdx] = obj;
-                    alert(`Item '${name}' updated (code already existed)!`);
-                } else {
-                    itemMasterStore.push(obj);
-                    alert(`Item '${name}' added to Item Master!`);
-                }
+            if (supabase) {
+                await supabase.from('items_master').upsert({
+                    code, name, category: cat, purchase_uom: purUom, recipe_uom: recUom, conversion_factor: conv, rate, yield_pct: yieldPct
+                });
             }
 
-            cancelItemEdit();
             saveAllToStorage(false);
             renderItemMasterTable();
             populateSubRecipeDropdowns();
             updateRecipeIngredientDropdown();
-            if (typeof updateFoodIngredientDropdown === 'function') updateFoodIngredientDropdown();
-        }
-
-        function editItemFull(index) {
-            const item = itemMasterStore[index];
-            if (!item) return;
-            document.getElementById('itemEditIndex').value = index;
-            document.getElementById('addCode').value = item.code;
-            document.getElementById('addName').value = item.name;
-            document.getElementById('addCat').value = item.cat;
-            document.getElementById('addPurUom').value = item.purUom;
-            document.getElementById('addRecUom').value = item.recUom;
-            document.getElementById('addConv').value = item.conv;
-            document.getElementById('addRate').value = item.rate;
-            document.getElementById('addYield').value = item.yieldPct;
-            document.getElementById('itemSaveBtn').innerText = '💾 Update Item';
-            document.getElementById('itemSaveBtn').className = 'btn-action btn-warning';
-            document.getElementById('itemCancelBtn').style.display = 'inline-block';
-            document.getElementById('addCode').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function cancelItemEdit() {
-            document.getElementById('itemEditIndex').value = -1;
-            document.getElementById('addCode').value = '';
-            document.getElementById('addName').value = '';
-            document.getElementById('addPurUom').value = '';
-            document.getElementById('addRecUom').value = '';
-            document.getElementById('addConv').value = '';
-            document.getElementById('addRate').value = '';
-            document.getElementById('addYield').value = '';
-            document.getElementById('itemSaveBtn').innerText = '+ Add Item';
-            document.getElementById('itemSaveBtn').className = 'btn-action btn-success';
-            document.getElementById('itemCancelBtn').style.display = 'none';
+            alert(`Item '${name}' saved!`);
         }
 
         function renderItemMasterTable() {
             const tbody = document.getElementById('tbodyItemMaster');
             if (!tbody) return;
-            const filter = (document.getElementById('itemFilterCat') || {}).value || 'ALL';
             tbody.innerHTML = '';
-            let shown = 0;
             itemMasterStore.forEach((item, index) => {
-                if (filter !== 'ALL' && item.cat !== filter) return;
-                shown++;
                 const effRate = item.yieldPct > 0 ? item.rate / (item.yieldPct / 100) : item.rate;
                 const unitRate = item.conv > 0 ? effRate / item.conv : effRate;
 
@@ -2098,114 +1158,30 @@
                         <td>1 ${item.purUom} = ${item.conv} ${item.recUom}</td>
                         <td>₹ ${item.rate.toFixed(2)}</td>
                         <td>${item.yieldPct.toFixed(1)}%</td>
-                        <td><strong>₹ ${effRate.toFixed(2)} / ${item.purUom}</strong></td>
-                        <td><strong>₹ ${unitRate.toFixed(4)} / ${item.recUom}</strong></td>
-                        <td>
-                            <button class="btn-action btn-warning" onclick="editItemFull(${index})">Edit</button>
-                            <button class="btn-action btn-danger" onclick="deleteItemMaster(${index})">Delete</button>
-                        </td>
+                        <td><strong>₹ ${effRate.toFixed(2)}</strong></td>
+                        <td><strong>₹ ${unitRate.toFixed(4)}</strong></td>
+                        <td><button class="btn-action btn-danger" onclick="deleteItemMaster(${index})">Delete</button></td>
                     </tr>
                 `;
             });
-            if (shown === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);">No items match the selected category filter.</td></tr>';
-            }
         }
 
-        function editItemPrice(index) { editItemFull(index); }
-
-
-        function deleteItemMaster(index) {
-            if (confirm(`Delete item '${itemMasterStore[index].name}'?`)) {
+        async function deleteItemMaster(index) {
+            const item = itemMasterStore[index];
+            if (confirm(`Delete '${item.name}'?`)) {
+                if (supabase) await supabase.from('items_master').delete().eq('code', item.code);
                 itemMasterStore.splice(index, 1);
                 saveAllToStorage(false);
                 renderItemMasterTable();
-                populateSubRecipeDropdowns();
-                updateRecipeIngredientDropdown();
             }
         }
 
-        function handleItemCsvImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const lines = e.target.result.split('\n');
-                let count = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    const cols = line.split(',');
-                    if (cols.length >= 2) {
-                        const code = cols[0].trim().toUpperCase();
-                        const existingIdx = itemMasterStore.findIndex(item => item.code === code);
-                        const itemObj = {
-                            code: code,
-                            name: cols[1].trim(),
-                            cat: (cols[2] || 'GROCERY').trim().toUpperCase(),
-                            purUom: (cols[3] || 'Kg').trim(),
-                            recUom: (cols[4] || 'Grams').trim(),
-                            conv: parseFloat(cols[5]) || 1000,
-                            rate: parseFloat(cols[6]) || 0,
-                            yieldPct: parseFloat(cols[7]) || 100
-                        };
-
-                        if (existingIdx >= 0) {
-                            itemMasterStore[existingIdx] = itemObj;
-                        } else {
-                            itemMasterStore.push(itemObj);
-                        }
-                        count++;
-                    }
-                }
-                saveAllToStorage(false);
-                renderItemMasterTable();
-                populateSubRecipeDropdowns();
-                updateRecipeIngredientDropdown();
-                alert(`Imported ${count} items successfully!`);
-            };
-            reader.readAsText(file);
-        }
-
-        function downloadSampleItemCsv() {
-            let csv = 'Code,Name,Category,PurchaseUOM,RecipeUOM,ConversionFactor,PurchaseRate,YieldPercent\n';
-            csv += 'CHK-10,Chicken Breast,CHICKEN,Kg,Grams,1000,320.00,85.0\n';
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Sample_Item_Master_Import.csv';
-            link.click();
-        }
-
-        function exportItemMasterCsv() {
-            let csv = 'Code,Name,Category,PurchaseUOM,RecipeUOM,ConversionFactor,PurchaseRate,YieldPercent\n';
-            itemMasterStore.forEach(i => {
-                csv += `"${i.code}","${i.name}","${i.cat}","${i.purUom}","${i.recUom}",${i.conv},${i.rate},${i.yieldPct}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Item_Master_Export.csv';
-            link.click();
-        }
-
-        // 2. SUB-RECIPE MASTER
-        function populateSubRecipeDropdowns() {
-            const select = document.getElementById('subRawItem');
-            if (!select) return;
-            select.innerHTML = '';
-            itemMasterStore.forEach(i => {
-                select.innerHTML += `<option value="${i.code}">${i.name} (${i.code}) - ₹${i.rate}/${i.purUom}</option>`;
-            });
-        }
-
-        function executeAddSubRecipe() {
+        // SUB-RECIPES
+        async function executeAddSubRecipe() {
             const prepName = document.getElementById('subPrepName').value.trim();
             const rawCode = document.getElementById('subRawItem').value;
             const rawQty = parseFloat(document.getElementById('subRawQty').value) || 0;
             const yieldPct = parseFloat(document.getElementById('subYieldPct').value) || 100;
-            const editIdx = parseInt(document.getElementById('subEditIndex').value);
 
             if (!prepName || rawQty <= 0) return alert('Enter Prep Name and Qty.');
 
@@ -2213,145 +1189,110 @@
             const yieldQty = rawQty * (yieldPct / 100);
             const cost = rawQty * (sourceItem ? sourceItem.rate : 0);
             const unitCostGrams = yieldQty > 0 ? cost / (yieldQty * 1000) : 0;
+            const code = `SUB-${String(subRecipeStore.length + 1).padStart(2,'0')}`;
 
-            const obj = {
-                code: editIdx >= 0 ? subRecipeStore[editIdx].code : `SUB-${String(subRecipeStore.length + 1).padStart(2,'0')}`,
-                name: prepName,
-                source: sourceItem ? sourceItem.name : rawCode,
-                sourceCode: rawCode,
-                rawQty, yieldQty, yieldPct, cost, unitCostGrams,
-                cat: sourceItem ? sourceItem.cat : 'GROCERY'
-            };
+            const subObj = { code, name: prepName, source: sourceItem ? sourceItem.name : rawCode, rawQty, yieldQty, yieldPct, cost, unitCostGrams };
+            subRecipeStore.push(subObj);
 
-            if (editIdx >= 0) {
-                subRecipeStore[editIdx] = obj;
-                alert(`Sub-Recipe '${prepName}' updated!`);
-            } else {
-                subRecipeStore.push(obj);
-                alert(`Sub-Recipe batch '${prepName}' created!`);
+            if (supabase) {
+                await supabase.from('sub_recipes').upsert({
+                    code, name: prepName, source: subObj.source, raw_qty: rawQty, yield_qty: yieldQty, yield_pct: yieldPct, cost, unit_cost_grams: unitCostGrams
+                });
             }
 
-            cancelSubRecipeEdit();
             saveAllToStorage(false);
             renderSubRecipeTable();
             updateRecipeIngredientDropdown();
-            if (typeof updateFoodIngredientDropdown === 'function') updateFoodIngredientDropdown();
-        }
-
-        function editSubRecipe(idx) {
-            const sub = subRecipeStore[idx];
-            if (!sub) return;
-            document.getElementById('subEditIndex').value = idx;
-            document.getElementById('subPrepName').value = sub.name;
-            document.getElementById('subRawQty').value = sub.rawQty;
-            document.getElementById('subYieldPct').value = sub.yieldPct;
-            // Select the source item
-            const sel = document.getElementById('subRawItem');
-            if (sel) {
-                for (let i = 0; i < sel.options.length; i++) {
-                    if (sel.options[i].value === (sub.sourceCode || '') || sel.options[i].text.includes(sub.source)) {
-                        sel.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-            document.getElementById('subSaveBtn').innerText = '💾 Update Sub-Recipe';
-            document.getElementById('subSaveBtn').className = 'btn-action btn-warning';
-            document.getElementById('subCancelBtn').style.display = 'inline-block';
-            document.getElementById('subPrepName').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function cancelSubRecipeEdit() {
-            document.getElementById('subEditIndex').value = -1;
-            document.getElementById('subPrepName').value = '';
-            document.getElementById('subRawQty').value = '';
-            document.getElementById('subYieldPct').value = '';
-            document.getElementById('subSaveBtn').innerText = '+ Create Sub-Recipe';
-            document.getElementById('subSaveBtn').className = 'btn-action btn-success';
-            document.getElementById('subCancelBtn').style.display = 'none';
+            alert(`Sub-Recipe batch '${prepName}' created!`);
         }
 
         function renderSubRecipeTable() {
             const tbody = document.getElementById('tbodySubRecipe');
             if (!tbody) return;
-            const filter = (document.getElementById('subFilterCat') || {}).value || 'ALL';
             tbody.innerHTML = '';
-            let shown = 0;
-            subRecipeStore.forEach((sub, idx) => {
-                if (filter !== 'ALL' && sub.cat && sub.cat !== filter) return;
-                shown++;
+            subRecipeStore.forEach(sub => {
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${sub.name}</strong></td>
                         <td>${sub.source}</td>
-                        <td>${sub.rawQty.toFixed(2)} Kg</td>
-                        <td>${sub.yieldQty.toFixed(2)} Kg</td>
-                        <td>${sub.yieldPct.toFixed(1)}%</td>
+                        <td>${sub.rawQty} Kg</td>
+                        <td>${sub.yieldQty} Kg</td>
+                        <td>${sub.yieldPct}%</td>
                         <td>₹ ${sub.cost.toFixed(2)}</td>
-                        <td>
-                            <button class="btn-action btn-warning" onclick="editSubRecipe(${idx})">Edit</button>
-                            <button class="btn-action btn-danger" onclick="deleteSubRecipe(${idx})">Delete</button>
-                        </td>
+                        <td><span class="badge">Active</span></td>
                     </tr>
                 `;
             });
-            if (shown === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No sub-recipes match the selected filter.</td></tr>';
+        }
+
+        // POS MENU & RECIPE BUILDER
+        async function executeAddMenuMaster() {
+            const code = document.getElementById('menuCode').value.trim().toUpperCase();
+            const name = document.getElementById('menuName').value.trim();
+            const cat = document.getElementById('menuCat').value;
+            const price = parseFloat(document.getElementById('menuPrice').value) || 0;
+
+            if (!code || !name || price <= 0) return alert('Enter POS Code, Name, and Price.');
+
+            if (!posMenuData[cat]) posMenuData[cat] = [];
+            posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
+
+            if (supabase) {
+                await supabase.from('pos_menu_master').upsert({
+                    code, name, category: cat, price, sold: 0, cost: 0, pct: '0%', recipe_list: []
+                });
             }
+
+            saveAllToStorage(false);
+            renderMenuMasterTable();
+            renderGlobalPosTable();
+            renderMainRecipeTable();
+            populateRecipePosDropdowns();
+            alert(`POS Menu SKU '${name}' added!`);
         }
 
-        function filterSubRecipeTable() {
-            renderSubRecipeTable();
-        }
-
-        function deleteSubRecipe(idx) {
-            if (confirm(`Delete sub-recipe '${subRecipeStore[idx].name}'?`)) {
-                subRecipeStore.splice(idx, 1);
-                saveAllToStorage(false);
-                renderSubRecipeTable();
-                updateRecipeIngredientDropdown();
-                if (typeof updateFoodIngredientDropdown === 'function') updateFoodIngredientDropdown();
-                cancelSubRecipeEdit();
-            }
-        }
-
-        // 3. MAIN RECIPE MASTER BUILDER
-        function populateRecipePosDropdowns() {
-            const select = document.getElementById('recipePosSelect');
-            if (!select) return;
-            const filter = (document.getElementById('recipeFilterCat') || {}).value || 'ALL';
-            select.innerHTML = '';
+        function renderMenuMasterTable() {
+            const tbody = document.getElementById('tbodyMenuMaster');
+            if (!tbody) return;
+            tbody.innerHTML = '';
             Object.keys(posMenuData).forEach(cat => {
-                if (filter !== 'ALL' && cat !== filter) return;
-                posMenuData[cat].forEach(m => {
-                    select.innerHTML += `<option value="${m.code}">${m.code}: ${m.name} (Selling: ₹${m.price.toFixed(2)})</option>`;
+                posMenuData[cat].forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.code}</strong></td>
+                            <td>${item.name}</td>
+                            <td><span class="badge">${item.cat}</span></td>
+                            <td>₹ ${item.price.toFixed(2)}</td>
+                            <td>₹ ${item.cost.toFixed(2)}</td>
+                            <td class="status-ok">${item.pct}</td>
+                            <td><span class="badge">Live</span></td>
+                        </tr>
+                    `;
                 });
             });
-            if (select.options.length === 0) {
-                select.innerHTML = '<option value="">No items in this category</option>';
-            }
         }
 
-        function updateRecipeIngredientDropdown() {
-            const type = document.getElementById('recipeIngType').value;
-            const select = document.getElementById('recipeIngSelect');
-            if (!select) return;
-            select.innerHTML = '';
-
-            if (type === 'RAW') {
-                itemMasterStore.forEach(i => {
-                    const effRate = i.yieldPct > 0 ? i.rate / (i.yieldPct / 100) : i.rate;
-                    const unitRate = i.conv > 0 ? effRate / i.conv : effRate;
-                    select.innerHTML += `<option value="${i.code}">RAW: ${i.name} (₹${unitRate.toFixed(4)}/${i.recUom})</option>`;
+        function renderGlobalPosTable() {
+            const tbody = document.getElementById('tbodyGlobalPos');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach(item => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${item.code}</strong></td>
+                            <td>${item.name}</td>
+                            <td>${item.cat}</td>
+                            <td>${cat} MENU</td>
+                            <td>₹ ${item.price.toFixed(2)}</td>
+                            <td><span class="badge" style="background:#dcfce7; color:#166534;">ACTIVE</span></td>
+                        </tr>
+                    `;
                 });
-            } else {
-                subRecipeStore.forEach(s => {
-                    select.innerHTML += `<option value="${s.code}">PREP: ${s.name} (₹${s.unitCostGrams.toFixed(4)}/Gram)</option>`;
-                });
-            }
+            });
         }
 
-        function executeAddRecipeIngredient() {
+        async function executeAddRecipeIngredient() {
             const posCode = document.getElementById('recipePosSelect').value;
             const ingType = document.getElementById('recipeIngType').value;
             const ingCode = document.getElementById('recipeIngSelect').value;
@@ -2389,407 +1330,49 @@
             if (!targetMenu.recipeList) targetMenu.recipeList = [];
             targetMenu.recipeList.push({ ingName, qty, uom, cost: ingTotalCost });
 
-            // Roll up final cost of dish
             targetMenu.cost = targetMenu.recipeList.reduce((sum, ing) => sum + ing.cost, 0);
             targetMenu.pct = targetMenu.price > 0 ? ((targetMenu.cost / targetMenu.price) * 100).toFixed(1) + '%' : '0%';
+
+            if (supabase) {
+                await supabase.from('pos_menu_master').update({
+                    recipe_list: targetMenu.recipeList,
+                    cost: targetMenu.cost,
+                    pct: targetMenu.pct
+                }).eq('code', posCode);
+            }
 
             saveAllToStorage(false);
             renderMainRecipeTable();
             renderMenuMasterTable();
-            alert(`Added component to ${targetMenu.name}! Final dish cost is now ₹${targetMenu.cost.toFixed(2)}`);
+            alert(`Added component to ${targetMenu.name}! Final dish cost is ₹${targetMenu.cost.toFixed(2)}`);
         }
 
-                function renderMainRecipeTable() {
+        function renderMainRecipeTable() {
             const tbody = document.getElementById('tbodyMainRecipe');
             if (!tbody) return;
-            const filter = (document.getElementById('recipeFilterCat') || {}).value || 'ALL';
             tbody.innerHTML = '';
-            let shown = 0;
             Object.keys(posMenuData).forEach(cat => {
-                if (filter !== 'ALL' && cat !== filter) return;
                 posMenuData[cat].forEach(item => {
-                    shown++;
                     const breakdown = item.recipeList && item.recipeList.length > 0
-                        ? item.recipeList.map((r, i) => `${r.qty} ${r.uom} ${r.ingName} (₹${r.cost.toFixed(2)})`).join(' + ')
+                        ? item.recipeList.map(r => `${r.qty} ${r.uom} ${r.ingName} (₹${r.cost.toFixed(2)})`).join(' + ')
                         : 'No components linked yet.';
-                    const portions = item.portions || 1;
 
                     tbody.innerHTML += `
                         <tr>
                             <td><strong>${item.name} (${item.code})</strong></td>
                             <td>₹ ${item.price.toFixed(2)}</td>
-                            <td style="font-size:12px;">${breakdown}</td>
-                            <td>${portions} Portion${portions > 1 ? 's' : ''}</td>
+                            <td>${breakdown}</td>
+                            <td>1 Portion</td>
                             <td><strong>₹ ${item.cost.toFixed(2)}</strong></td>
                             <td class="status-ok">${item.pct}</td>
-                            <td>
-                                <button class="btn-action btn-warning" onclick="loadRecipeForEdit('${item.code}')">Edit</button>
-                                <button class="btn-action btn-danger" onclick="clearRecipeComponents('${item.code}')">Clear</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
-            if (shown === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No recipes match the selected category filter.</td></tr>';
-            }
-        }
-
-        function loadRecipeForEdit(posCode) {
-            const sel = document.getElementById('recipePosSelect');
-            if (sel) {
-                for (let i = 0; i < sel.options.length; i++) {
-                    if (sel.options[i].value === posCode) {
-                        sel.selectedIndex = i;
-                        break;
-                    }
-                }
-            }
-            let found = null;
-            Object.keys(posMenuData).forEach(cat => {
-                const f = posMenuData[cat].find(m => m.code === posCode);
-                if (f) found = f;
-            });
-            if (found) {
-                if (document.getElementById('recipePortionCount')) {
-                    document.getElementById('recipePortionCount').value = found.portions || 1;
-                }
-                // Show current ingredients in a temporary panel
-                showCurrentRecipeIngredients(posCode);
-                alert(`Editing recipe for "${found.name}".\nCurrent cost: ₹${(found.cost||0).toFixed(2)}\nYou can remove ingredients below or add new ones.`);
-            }
-            document.getElementById('recipePosSelect').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function showCurrentRecipeIngredients(posCode) {
-            let panel = document.getElementById('currentRecipePanel');
-            if (!panel) {
-                panel = document.createElement('div');
-                panel.id = 'currentRecipePanel';
-                panel.style.cssText = 'background:#fff7ed; border:1px solid #fdba74; border-radius:6px; padding:12px; margin-bottom:12px;';
-                const form = document.querySelector('#secMainRecipeMaster .card > div');
-                if (form) form.parentNode.insertBefore(panel, form.nextSibling);
-            }
-            let found = null;
-            Object.keys(posMenuData).forEach(cat => {
-                const f = posMenuData[cat].find(m => m.code === posCode);
-                if (f) found = f;
-            });
-            if (!found || !found.recipeList || found.recipeList.length === 0) {
-                panel.innerHTML = `<strong>Current Recipe for ${posCode}:</strong> <em>No ingredients yet. Add below.</em>`;
-                return;
-            }
-            let html = `<strong>Current Ingredients for ${found.name} (${posCode}):</strong>
-                <table style="margin-top:8px; font-size:12px; width:100%;">
-                <thead><tr><th>#</th><th>Ingredient</th><th>Qty</th><th>UOM</th><th>Cost</th><th>Action</th></tr></thead><tbody>`;
-            found.recipeList.forEach((r, i) => {
-                html += `<tr>
-                    <td>${i+1}</td><td>${r.ingName}</td><td>${r.qty}</td><td>${r.uom}</td>
-                    <td>₹ ${r.cost.toFixed(2)}</td>
-                    <td><button class="btn-action btn-danger" style="padding:2px 6px;font-size:11px;" onclick="removeRecipeIngredient('${posCode}', ${i})">Remove</button></td>
-                </tr>`;
-            });
-            html += `</tbody></table>
-                <button class="btn-action btn-warning" style="margin-top:6px;" onclick="document.getElementById('currentRecipePanel').style.display='none'">Hide</button>`;
-            panel.innerHTML = html;
-            panel.style.display = 'block';
-        }
-
-        function removeRecipeIngredient(posCode, ingIndex) {
-            Object.keys(posMenuData).forEach(cat => {
-                const found = posMenuData[cat].find(m => m.code === posCode);
-                if (found && found.recipeList) {
-                    found.recipeList.splice(ingIndex, 1);
-                    const total = found.recipeList.reduce((s, r) => s + r.cost, 0);
-                    const portions = found.portions || 1;
-                    found.cost = portions > 0 ? total / portions : total;
-                    found.pct = found.price > 0 ? ((found.cost / found.price) * 100).toFixed(1) + '%' : '0%';
-                }
-            });
-            saveAllToStorage(false);
-            renderMainRecipeTable();
-            renderMenuMasterTable();
-            showCurrentRecipeIngredients(posCode);
-        }
-
-        function clearRecipeComponents(posCode) {
-            Object.keys(posMenuData).forEach(cat => {
-                const found = posMenuData[cat].find(m => m.code === posCode);
-                if (found) {
-                    found.recipeList = [];
-                    found.cost = 0;
-                    found.pct = '0.0%';
-                }
-            });
-            saveAllToStorage(false);
-            renderMainRecipeTable();
-            renderMenuMasterTable();
-        }
-
-        // 4. POS MENU MASTER & GLOBAL POS MASTER
-        function executeAddMenuMaster() {
-            const code = document.getElementById('menuCode').value.trim().toUpperCase();
-            const name = document.getElementById('menuName').value.trim();
-            const cat = document.getElementById('menuCat').value;
-            const price = parseFloat(document.getElementById('menuPrice').value) || 0;
-
-            if (!code || !name || price <= 0) return alert('Enter POS Code, Name, and Selling Price.');
-
-            if (!posMenuData[cat]) posMenuData[cat] = [];
-            posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
-
-            saveAllToStorage(false);
-            renderMenuMasterTable();
-            renderGlobalPosTable();
-            renderMainRecipeTable();
-            populateRecipePosDropdowns();
-            alert(`POS Menu SKU '${name}' added!`);
-        }
-
-        function renderMenuMasterTable() {
-            const tbody = document.getElementById('tbodyMenuMaster');
-            if (!tbody) return;
-            const filter = (document.getElementById('menuFilterCat') || {}).value || 'ALL';
-            tbody.innerHTML = '';
-            let shown = 0;
-            Object.keys(posMenuData).forEach(cat => {
-                if (filter !== 'ALL' && cat !== filter) return;
-                posMenuData[cat].forEach((item, idx) => {
-                    shown++;
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${item.code}</strong></td>
-                            <td>${item.name}</td>
-                            <td><span class="badge">${item.cat}</span></td>
-                            <td>₹ ${item.price.toFixed(2)}</td>
-                            <td>₹ ${item.cost.toFixed(2)}</td>
-                            <td class="status-ok">${item.pct}</td>
-                            <td>
-                                <button class="btn-action btn-warning" onclick="editMenuPrice('${cat}', ${idx})">Edit Price</button>
-                                <button class="btn-action btn-danger" onclick="deleteMenuSKU('${cat}', ${idx})">Delete</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            });
-            if (shown === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);">No menu items match the selected category.</td></tr>';
-            }
-        }
-
-        function deleteMenuSKU(cat, idx) {
-            if (confirm(`Delete '${posMenuData[cat][idx].name}' from POS Master?`)) {
-                posMenuData[cat].splice(idx, 1);
-                saveAllToStorage(false);
-                renderMenuMasterTable();
-                renderGlobalPosTable();
-                renderMainRecipeTable();
-                populateRecipePosDropdowns();
-            }
-        }
-
-        function renderGlobalPosTable() {
-            const tbody = document.getElementById('tbodyGlobalPos');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            Object.keys(posMenuData).forEach(cat => {
-                posMenuData[cat].forEach(item => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td><strong>${item.code}</strong></td>
-                            <td>${item.name}</td>
-                            <td><span class="badge">${item.cat}</span></td>
-                            <td>${cat} MENU</td>
-                            <td>₹ ${item.price.toFixed(2)}</td>
-                            <td><span class="badge" style="background:#dcfce7; color:#166534;">ACTIVE</span></td>
+                            <td><span class="badge">Configured</span></td>
                         </tr>
                     `;
                 });
             });
         }
 
-        function editMenuPrice(cat, index) {
-            const currentItem = posMenuData[cat][index];
-            const newPrice = prompt(`Enter new Selling Price (₹):`, currentItem.price);
-            if (newPrice !== null && !isNaN(parseFloat(newPrice))) {
-                currentItem.price = parseFloat(newPrice);
-                currentItem.pct = currentItem.price > 0 ? ((currentItem.cost / currentItem.price) * 100).toFixed(1) + '%' : '0%';
-                saveAllToStorage(false);
-                renderMenuMasterTable();
-                renderGlobalPosTable();
-                renderMainRecipeTable();
-                alert('Price updated!');
-            }
-        }
-
-        function handlePosCsvImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const lines = e.target.result.split('\n');
-                let count = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    const cols = line.split(',');
-                    if (cols.length >= 3) {
-                        const code = cols[0].trim().toUpperCase();
-                        const name = cols[1].trim();
-                        const cat = (cols[2] || 'FOOD').trim().toUpperCase();
-                        const price = parseFloat(cols[3]) || 0;
-
-                        if (!posMenuData[cat]) posMenuData[cat] = [];
-                        const existing = posMenuData[cat].find(m => m.code === code);
-                        if (existing) {
-                            existing.name = name;
-                            existing.price = price;
-                        } else {
-                            posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0, pct: '0%', recipeList: [] });
-                        }
-                        count++;
-                    }
-                }
-                saveAllToStorage(false);
-                renderMenuMasterTable();
-                renderGlobalPosTable();
-                renderMainRecipeTable();
-                populateRecipePosDropdowns();
-                alert(`Imported ${count} POS Menu items!`);
-            };
-            reader.readAsText(file);
-        }
-
-        function downloadSamplePosCsv() {
-            let csv = 'POSCode,MenuItemName,Category,SellingPrice\n';
-            csv += 'POS-201,Chicken Biryani Special,FOOD,380.00\n';
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = 'Sample_POS_Menu_Import.csv';
-            link.click();
-        }
-
-        // AUDIT & DASHBOARD
-        function updateBreadcrumb(trailArray) {
-            const bc = document.getElementById('breadcrumbTrail');
-            bc.innerHTML = trailArray.map((t, idx) => {
-                if (idx === trailArray.length - 1) return `<strong>${t.name}</strong>`;
-                return `<span onclick="${t.action}">${t.name}</span> ➔ `;
-            }).join('');
-        }
-
-
-
-        function drillToPosMenu(categoryKey) {
-            switchSection('dashboard', null);
-            document.querySelectorAll('.kpi-card').forEach(c => c.classList.remove('active-kpi'));
-            const activeCard = document.getElementById(`kpi-${categoryKey}`);
-            if (activeCard) activeCard.classList.add('active-kpi');
-            document.getElementById('posMenuHeader').innerText = `1. POS Menu Master & Sales Breakdown — [ Category: ${categoryKey} ]`;
-            
-            const tbody = document.getElementById('posMenuTbody');
-            tbody.innerHTML = '';
-            (posMenuData[categoryKey] || posMenuData['FOOD'] || []).forEach(item => {
-                tbody.innerHTML += `<tr>
-                    <td><strong>${item.code}</strong></td>
-                    <td>${item.name}</td>
-                    <td><span class="badge" onclick="drillToCategory('${item.cat}')">${item.cat}</span></td>
-                    <td>₹ ${item.price.toFixed(2)}</td>
-                    <td>
-                        <input type="number" class="num-input" value="${item.sold || 0}" min="0"
-                            onchange="updateSoldQty('${categoryKey}','${item.code}', this.value)"
-                            style="width:70px;"> units
-                    </td>
-                    <td>₹ ${item.cost.toFixed(2)}</td>
-                    <td class="status-ok">${item.pct}</td>
-                    <td><button class="btn-action" onclick="drillToCategory('${item.cat}')">Deconstruct ➔</button></td>
-                </tr>`;
-            });
-            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `POS Sales: ${categoryKey}`, action: `drillToPosMenu('${categoryKey}')` }]);
-        }
-
-        function drillToCategory(catFamily) {
-            switchSection('dashboard', null);
-            document.getElementById('categoryHeader').innerText = `2. Category Consumption Summary — [ Family: ${catFamily} ]`;
-
-            const tbody = document.getElementById('categoryTbody');
-            if (tbody) {
-                tbody.innerHTML = '';
-                const families = (catFamily === 'ALL') ? Object.keys(itemLedgerData) : [catFamily];
-                families.forEach(fam => {
-                    const items = itemLedgerData[fam] || [];
-                    if (items.length === 0) return;
-                    const primaryNames = items.map(i => i.name).join(', ');
-                    const totalTheo = items.reduce((s, i) => s + i.theo, 0);
-                    const totalSpend = items.reduce((s, i) => s + (i.theo * i.rate), 0);
-                    const unit = items[0].unit || 'Kg';
-                    tbody.innerHTML += `<tr>
-                        <td><span class="badge" onclick="drillToItem('${fam}')">${fam}</span></td>
-                        <td>${primaryNames}</td>
-                        <td>${totalTheo.toFixed(3)} ${unit}</td>
-                        <td>₹ ${totalSpend.toFixed(2)}</td>
-                        <td><button class="btn-action" onclick="drillToItem('${fam}')">Inspect Item Ledger ➔</button></td>
-                    </tr>`;
-                });
-                if (tbody.innerHTML === '') {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">No data for this category.</td></tr>';
-                }
-            }
-
-            document.getElementById('viewCategory').scrollIntoView({ behavior: 'smooth' });
-            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `Category Usage: ${catFamily}`, action: `drillToCategory('${catFamily}')` }]);
-        }
-
-        function drillToItem(itemFamilyKey) {
-            switchSection('dashboard', null);
-            const family = itemFamilyKey === 'ALL' ? 'CHICKEN' : itemFamilyKey;
-            document.getElementById('itemLedgerHeader').innerText = `3. Raw Item Variance Ledger — Family [ ${family} ] (Op + Pur - Cl = Actual Usage)`;
-
-            const tbody = document.getElementById('itemLedgerTbody');
-            tbody.innerHTML = '';
-            const items = itemLedgerData[family] || itemLedgerData['CHICKEN'] || [];
-            let sumAct = 0, sumTheo = 0, sumVarVal = 0;
-            const unit = items.length > 0 ? items[0].unit : 'Kg';
-
-            items.forEach(item => {
-                const varVal = item.varQty * item.rate;
-                sumAct += item.act;
-                sumTheo += item.theo;
-                sumVarVal += varVal;
-                const statusClass = item.varQty > 0 ? 'status-warn' : 'status-ok';
-                const statusText = item.varQty > 0 ? 'SHORTAGE' : (item.varQty < 0 ? 'OVERAGE' : 'OK');
-                tbody.innerHTML += `<tr>
-                    <td><strong>${item.code}</strong></td>
-                    <td>${item.name}</td>
-                    <td><span class="badge">${item.cat}</span></td>
-                    <td>${item.op} ${item.unit}</td>
-                    <td>${item.pur} ${item.unit}</td>
-                    <td>${item.cl} ${item.unit}</td>
-                    <td><strong>${item.act} ${item.unit}</strong></td>
-                    <td>${item.theo} ${item.unit}</td>
-                    <td class="${statusClass}"><strong>${item.varQty} ${item.unit}</strong></td>
-                    <td>₹ ${item.rate}</td>
-                    <td class="${statusClass}">₹ ${varVal.toFixed(2)}</td>
-                    <td><span class="${statusClass}">${statusText}</span></td>
-                </tr>`;
-            });
-
-            const sumActEl = document.getElementById('sumActualUsage');
-            const sumTheoEl = document.getElementById('sumTheoUsage');
-            const sumVarEl = document.getElementById('sumVarianceVal');
-            if (sumActEl) sumActEl.innerText = `${sumAct.toFixed(3)} ${unit}`;
-            if (sumTheoEl) sumTheoEl.innerText = `${sumTheo.toFixed(3)} ${unit}`;
-            if (sumVarEl) {
-                sumVarEl.innerText = `₹ ${sumVarVal.toFixed(2)}`;
-                sumVarEl.className = sumVarVal > 0 ? 'status-warn' : 'status-ok';
-            }
-
-            document.getElementById('viewItemLedger').scrollIntoView({ behavior: 'smooth' });
-            updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }, { name: `Item Ledger: ${family}`, action: `drillToItem('${family}')` }]);
-        }
-
-        // ========== BCG MATRIX ==========
+        // BCG & REPORTS
         function renderBcgMatrix() {
             const tbody = document.getElementById('bcgMatrixTbody');
             if (!tbody) return;
@@ -2798,226 +1381,143 @@
                 (posMenuData[cat] || []).forEach(item => {
                     const contribution = (item.price || 0) - (item.cost || 0);
                     const marginPct = item.price > 0 ? (contribution / item.price) * 100 : 0;
-                    allItems.push({
-                        code: item.code, name: item.name, cat: item.cat || cat,
-                        sold: item.sold || 0, price: item.price || 0, cost: item.cost || 0,
-                        contribution, marginPct
-                    });
+                    allItems.push({ code: item.code, name: item.name, cat: item.cat || cat, sold: item.sold || 0, price: item.price || 0, cost: item.cost || 0, contribution, marginPct });
                 });
             });
-            if (allItems.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No POS menu items found.</td></tr>';
-                ['bcgStarsCount','bcgCowsCount','bcgQuestionsCount','bcgDogsCount'].forEach(id => {
-                    const e = document.getElementById(id); if (e) e.innerText = '0';
-                });
-                return;
-            }
+            if (allItems.length === 0) return;
             const avgSold = allItems.reduce((s,i) => s + i.sold, 0) / allItems.length;
             const avgMargin = allItems.reduce((s,i) => s + i.marginPct, 0) / allItems.length;
-            let stars=0, cows=0, questions=0, dogs=0;
             tbody.innerHTML = '';
             allItems.forEach(item => {
                 const highPop = item.sold >= avgSold;
                 const highProfit = item.marginPct >= avgMargin;
                 let classification, badgeStyle;
-                if (highPop && highProfit) { classification='⭐ STARS'; badgeStyle='background:#dcfce7;color:#166534;'; stars++; }
-                else if (!highPop && highProfit) { classification='🐄 CASH COWS'; badgeStyle='background:#dbeafe;color:#1e40af;'; cows++; }
-                else if (highPop && !highProfit) { classification='❓ QUESTION MARKS'; badgeStyle='background:#fef3c7;color:#92400e;'; questions++; }
-                else { classification='🐕 DOGS'; badgeStyle='background:#fee2e2;color:#991b1b;'; dogs++; }
+                if (highPop && highProfit) { classification='⭐ STARS'; badgeStyle='background:#dcfce7;color:#166534;'; }
+                else if (!highPop && highProfit) { classification='🐄 CASH COWS'; badgeStyle='background:#dbeafe;color:#1e40af;'; }
+                else if (highPop && !highProfit) { classification='❓ QUESTION MARKS'; badgeStyle='background:#fef3c7;color:#92400e;'; }
+                else { classification='🐕 DOGS'; badgeStyle='background:#fee2e2;color:#991b1b;'; }
                 tbody.innerHTML += `<tr>
-                    <td><strong>${item.code}</strong></td><td>${item.name}</td>
-                    <td><span class="badge">${item.cat}</span></td>
-                    <td><strong>${item.sold}</strong></td>
-                    <td>₹ ${item.price.toFixed(2)}</td><td>₹ ${item.cost.toFixed(2)}</td>
+                    <td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge">${item.cat}</span></td>
+                    <td><strong>${item.sold}</strong></td><td>₹ ${item.price.toFixed(2)}</td><td>₹ ${item.cost.toFixed(2)}</td>
                     <td>₹ ${item.contribution.toFixed(2)}</td><td>${item.marginPct.toFixed(1)}%</td>
                     <td><span class="badge" style="${badgeStyle}">${classification}</span></td></tr>`;
             });
-            document.getElementById('bcgStarsCount').innerText = stars;
-            document.getElementById('bcgCowsCount').innerText = cows;
-            document.getElementById('bcgQuestionsCount').innerText = questions;
-            document.getElementById('bcgDogsCount').innerText = dogs;
             document.getElementById('bcgAvgSold').innerText = avgSold.toFixed(1) + ' units';
             document.getElementById('bcgAvgMargin').innerText = avgMargin.toFixed(1) + '%';
-        }
-
-        // ========== DASHBOARD KPIs ==========
-        function updateDashboardKPIs() {
-            ['FOOD','LIQUOR','NAB','BREWERY','TOBACCO'].forEach(cat => {
-                const items = posMenuData[cat] || [];
-                const el = document.querySelector(`#kpi-${cat} .kpi-value`);
-                if (!el) return;
-                if (items.length === 0) { el.innerText = '—'; return; }
-                let totalRev = 0, totalCost = 0;
-                items.forEach(i => {
-                    const sold = i.sold || 1;
-                    totalRev += (i.price || 0) * sold;
-                    totalCost += (i.cost || 0) * sold;
-                });
-                const avgPct = totalRev > 0 ? (totalCost / totalRev) * 100 : 0;
-                el.innerText = avgPct.toFixed(1) + '%';
-                el.className = 'kpi-value ' + (avgPct <= 30 ? 'status-ok' : 'status-warn');
-            });
-        }
-
-        // ========== FOOD CALCULATOR ==========
-        let foodIngredients = [];
-
-        function updateFoodIngredientDropdown() {
-            const type = document.getElementById('foodIngType')?.value || 'RAW';
-            const filter = (document.getElementById('foodFilterCat') || {}).value || 'ALL';
-            const select = document.getElementById('foodIngSelect');
-            if (!select) return;
-            select.innerHTML = '';
-            if (type === 'RAW') {
-                itemMasterStore.forEach(i => {
-                    if (filter !== 'ALL' && i.cat !== filter) return;
-                    const effRate = i.yieldPct > 0 ? i.rate / (i.yieldPct / 100) : i.rate;
-                    const unitRate = i.conv > 0 ? effRate / i.conv : effRate;
-                    select.innerHTML += `<option value="${i.code}" data-unitcost="${unitRate}" data-uom="${i.recUom}">${i.name} (₹${unitRate.toFixed(4)}/${i.recUom})</option>`;
-                });
-            } else {
-                subRecipeStore.forEach(s => {
-                    if (filter !== 'ALL' && s.cat && s.cat !== filter) return;
-                    select.innerHTML += `<option value="${s.code}" data-unitcost="${s.unitCostGrams}" data-uom="Grams">${s.name} (₹${s.unitCostGrams.toFixed(4)}/Gram)</option>`;
-                });
-            }
-            if (select.options.length === 0) {
-                select.innerHTML = '<option value="">No items in this category</option>';
-            } else if (select.options.length > 0) {
-                const uomEl = document.getElementById('foodIngUom');
-                if (uomEl) uomEl.value = select.options[0].getAttribute('data-uom') || 'Grams';
-            }
-        }
-
-        function addFoodIngredient() {
-            const select = document.getElementById('foodIngSelect');
-            const qty = parseFloat(document.getElementById('foodIngQty').value) || 0;
-            const uom = (document.getElementById('foodIngUom').value || 'Grams').trim();
-            if (!select || !select.value || qty <= 0) {
-                alert('Select an ingredient and enter a valid quantity.');
-                return;
-            }
-            const opt = select.options[select.selectedIndex];
-            const unitCost = parseFloat(opt.getAttribute('data-unitcost')) || 0;
-            const name = opt.text.split(' (')[0];
-            foodIngredients.push({
-                name, type: document.getElementById('foodIngType').value,
-                qty, uom, unitCost, lineCost: qty * unitCost
-            });
-            document.getElementById('foodIngQty').value = '';
-            renderFoodIngredientsTable();
-            calculateFoodRecipe();
-        }
-
-        function removeFoodIngredient(idx) {
-            foodIngredients.splice(idx, 1);
-            renderFoodIngredientsTable();
-            calculateFoodRecipe();
-        }
-
-        function renderFoodIngredientsTable() {
-            const tbody = document.getElementById('foodIngredientsTbody');
-            if (!tbody) return;
-            if (foodIngredients.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No ingredients added yet.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = foodIngredients.map((ing, idx) => `
-                <tr>
-                    <td>${idx+1}</td>
-                    <td><strong>${ing.name}</strong></td>
-                    <td><span class="badge">${ing.type}</span></td>
-                    <td>${ing.qty}</td><td>${ing.uom}</td>
-                    <td>₹ ${ing.unitCost.toFixed(4)}</td>
-                    <td><strong>₹ ${ing.lineCost.toFixed(2)}</strong></td>
-                    <td><button class="btn-action btn-danger" onclick="removeFoodIngredient(${idx})">Remove</button></td>
-                </tr>`).join('');
-        }
-
-        function calculateFoodRecipe() {
-            const sellingPrice = parseFloat(document.getElementById('foodSellingPrice')?.value) || 0;
-            const targetPct = parseFloat(document.getElementById('foodTargetCostPct')?.value) || 28;
-            const portions = parseFloat(document.getElementById('foodPortions')?.value) || 1;
-            const totalCost = foodIngredients.reduce((s, i) => s + i.lineCost, 0);
-            const costPerPortion = portions > 0 ? totalCost / portions : totalCost;
-            const actualPct = sellingPrice > 0 ? (costPerPortion / sellingPrice) * 100 : 0;
-            const targetCostVal = sellingPrice * (targetPct / 100);
-            const variance = targetCostVal - costPerPortion;
-
-            const set = (id, val) => { const e = document.getElementById(id); if (e) e.innerText = val; };
-            set('foodTotalCost', `₹ ${totalCost.toFixed(2)}`);
-            set('foodCostPerPortion', `₹ ${costPerPortion.toFixed(2)}`);
-            set('foodActualPct', `${actualPct.toFixed(1)}%`);
-            const pctEl = document.getElementById('foodActualPct');
-            if (pctEl) pctEl.className = actualPct <= targetPct ? 'status-ok' : 'status-warn';
-            set('foodTargetCostVal', `₹ ${targetCostVal.toFixed(2)}`);
-            const varEl = document.getElementById('foodVarianceMsg');
-            if (varEl) {
-                varEl.innerHTML = variance >= 0
-                    ? `Variance: <span class="status-ok">₹ ${variance.toFixed(2)} under target (Good)</span>`
-                    : `Variance: <span class="status-warn">₹ ${Math.abs(variance).toFixed(2)} over target</span>`;
-            }
-        }
-
-        function showDashboard() {
-            switchSection('dashboard', null);
-            if (typeof updateDashboardKPIs === 'function') updateDashboardKPIs();
-            if (typeof drillToPosMenu === 'function') drillToPosMenu('FOOD');
-            if (typeof drillToCategory === 'function') drillToCategory('ALL');
-            if (typeof updateBreadcrumb === 'function') {
-                updateBreadcrumb([{ name: 'Dashboard Home', action: 'showDashboard()' }]);
-            }
-        }
-
-
-
-        function updateSoldQty(cat, code, val) {
-            const items = posMenuData[cat] || [];
-            const item = items.find(i => i.code === code);
-            if (item) {
-                item.sold = parseInt(val) || 0;
-                saveAllToStorage(false);
-                if (typeof updateDashboardKPIs === 'function') updateDashboardKPIs();
-                if (typeof renderItemwiseReport === 'function') renderItemwiseReport();
-                if (typeof renderBcgMatrix === 'function') renderBcgMatrix();
-            }
         }
 
         function renderItemwiseReport() {
             const tbody = document.getElementById('itemwiseTbody');
             if (!tbody) return;
-            const filter = (document.getElementById('itemwiseFilterCat') || {}).value || 'ALL';
             tbody.innerHTML = '';
-            let shown = 0;
             Object.keys(posMenuData).forEach(cat => {
-                if (filter !== 'ALL' && cat !== filter) return;
-                (posMenuData[cat] || []).forEach(item => {
-                    shown++;
+                posMenuData[cat].forEach(item => {
                     const sold = item.sold || 0;
                     const rev = (item.price || 0) * sold;
                     const totCost = (item.cost || 0) * sold;
                     const profit = rev - totCost;
-                    const pct = item.price > 0 ? ((item.cost / item.price) * 100).toFixed(1) : '0.0';
-                    const pctClass = parseFloat(pct) <= 30 ? 'status-ok' : 'status-warn';
                     tbody.innerHTML += `<tr>
-                        <td>${cat}</td>
-                        <td>${cat} MENU</td>
-                        <td>${item.name}</td>
-                        <td>${sold}</td>
-                        <td>₹ ${(item.price||0).toFixed(2)}</td>
-                        <td>₹ ${(item.cost||0).toFixed(2)}</td>
-                        <td>₹ ${rev.toFixed(2)}</td>
-                        <td>₹ ${totCost.toFixed(2)}</td>
-                        <td>₹ ${profit.toFixed(2)}</td>
-                        <td class="${pctClass}">${pct}%</td>
-                    </tr>`;
+                        <td>${cat}</td><td>${cat} MENU</td><td>${item.name}</td><td>${sold}</td>
+                        <td>₹ ${(item.price||0).toFixed(2)}</td><td>₹ ${(item.cost||0).toFixed(2)}</td>
+                        <td>₹ ${rev.toFixed(2)}</td><td>₹ ${totCost.toFixed(2)}</td><td>₹ ${profit.toFixed(2)}</td>
+                        <td class="status-ok">${item.pct}</td></tr>`;
                 });
             });
-            if (shown === 0) {
-                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);">No items match the filter.</td></tr>';
+        }
+
+        // DROPDOWNS & NAVIGATION HELPERS
+        function populateSubRecipeDropdowns() {
+            const select = document.getElementById('subRawItem');
+            if (!select) return;
+            select.innerHTML = '';
+            itemMasterStore.forEach(i => {
+                select.innerHTML += `<option value="${i.code}">${i.name} (${i.code}) - ₹${i.rate}/${i.purUom}</option>`;
+            });
+        }
+
+        function populateRecipePosDropdowns() {
+            const select = document.getElementById('recipePosSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            Object.keys(posMenuData).forEach(cat => {
+                posMenuData[cat].forEach(m => {
+                    select.innerHTML += `<option value="${m.code}">${m.code}: ${m.name} (Selling: ₹${m.price})</option>`;
+                });
+            });
+        }
+
+        function updateRecipeIngredientDropdown() {
+            const type = document.getElementById('recipeIngType').value;
+            const select = document.getElementById('recipeIngSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            if (type === 'RAW') {
+                itemMasterStore.forEach(i => {
+                    const effRate = i.yieldPct > 0 ? i.rate / (i.yieldPct / 100) : i.rate;
+                    const unitRate = i.conv > 0 ? effRate / i.conv : effRate;
+                    select.innerHTML += `<option value="${i.code}">RAW: ${i.name} (₹${unitRate.toFixed(4)}/${i.recUom})</option>`;
+                });
+            } else {
+                subRecipeStore.forEach(s => {
+                    select.innerHTML += `<option value="${s.code}">PREP: ${s.name} (₹${s.unitCostGrams.toFixed(4)}/Gram)</option>`;
+                });
             }
         }
 
+        function renderUsersList() {
+            const tbody = document.getElementById('usersListTbody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            appUsers.forEach(u => {
+                tbody.innerHTML += `<tr><td><strong>${u.id}</strong></td><td>${u.name}</td><td><span class="badge">${u.role}</span></td><td><span class="badge">Active</span></td></tr>`;
+            });
+        }
+
+        function showDashboard() {
+            switchSection('dashboard', null);
+            drillToPosMenu('FOOD');
+        }
+
+        function drillToPosMenu(cat) {
+            document.getElementById('posMenuHeader').innerText = `1. POS Menu Master & Sales Breakdown — [ Category: ${cat} ]`;
+            const tbody = document.getElementById('posMenuTbody');
+            tbody.innerHTML = '';
+            (posMenuData[cat] || []).forEach(item => {
+                tbody.innerHTML += `<tr>
+                    <td><strong>${item.code}</strong></td><td>${item.name}</td><td><span class="badge">${item.cat}</span></td>
+                    <td>₹ ${item.price.toFixed(2)}</td><td>${item.sold} units</td><td>₹ ${item.cost.toFixed(2)}</td>
+                    <td class="status-ok">${item.pct}</td><td><button class="btn-action" onclick="drillToCategory('${item.cat}')">Deconstruct ➔</button></td>
+                </tr>`;
+            });
+        }
+
+        function drillToCategory(cat) {
+            document.getElementById('categoryHeader').innerText = `2. Category Consumption Summary — [ Family: ${cat} ]`;
+            const tbody = document.getElementById('categoryTbody');
+            tbody.innerHTML = `<tr><td><span class="badge">${cat}</span></td><td>Primary Ingredients</td><td>18.500 Kg</td><td>₹ 4,070.00</td><td><button class="btn-action" onclick="drillToItem('${cat}')">Inspect Ledger ➔</button></td></tr>`;
+        }
+
+        function drillToItem(fam) {
+            document.getElementById('itemLedgerHeader').innerText = `3. Raw Item Variance Ledger — Family [ ${fam} ]`;
+            const tbody = document.getElementById('itemLedgerTbody');
+            tbody.innerHTML = `<tr><td><strong>CHK-001</strong></td><td>Chicken Boneless</td><td><span class="badge">${fam}</span></td><td>10.000 Kg</td><td>15.000 Kg</td><td>5.500 Kg</td><td><strong>19.500 Kg</strong></td><td>18.500 Kg</td><td class="status-warn"><strong>1.000 Kg</strong></td><td>₹ 220</td><td class="status-warn">₹ 220.00</td><td><span class="status-warn">SHORTAGE</span></td></tr>`;
+        }
+
+        function downloadBackup() {
+            const data = { items: itemMasterStore, subs: subRecipeStore, pos: posMenuData, users: appUsers };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `ARRONE_Backup_${Date.now()}.json`;
+            link.click();
+        }
+
+        function resetToFactoryDefaults() {
+            if (confirm('Reset to system demo defaults?')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
     </script>
 </body>
 </html>
