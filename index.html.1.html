@@ -188,6 +188,7 @@
 </head>
 <body>
 
+    <!-- 1. LOGIN OVERLAY -->
     <div id="loginOverlay">
         <div class="login-card">
             <h2>ARRONE INVENTORY</h2>
@@ -202,10 +203,11 @@
 
                 <button type="submit">Sign In to ARRONE System</button>
             </form>
-            <div id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px;"></div>
+            <div id="loginError" style="color: var(--danger); font-size: 12px; margin-top: 10px; font-weight: bold;"></div>
         </div>
     </div>
 
+    <!-- 2. MAIN APPLICATION -->
     <div id="appContainer" style="display: none;">
 
         <div class="sidebar">
@@ -326,8 +328,7 @@
                             <thead>
                                 <tr><th>Category Family</th><th>Primary Ingredients</th><th>Theoretical Usage Qty</th><th>Category Spend (₹)</th><th>Drill Down Action</th></tr>
                             </thead>
-                            <tbody id="categoryTbody">
-                            </tbody>
+                            <tbody id="categoryTbody"></tbody>
                         </table>
                     </div>
 
@@ -780,7 +781,9 @@
         // ==========================================
         const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_LxV89PjPnX55ZEIT47p5rQ_PHDDOLZp';
-        const supabase = (SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY' && window.supabase) ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+        const supabase = (SUPABASE_KEY.length > 30 && SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY' && window.supabase) 
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
+            : null;
 
         // DEFAULT FALLBACK DATASETS
         const DEFAULT_ITEMS = [
@@ -834,11 +837,12 @@
 
         let currentUser = null;
         let inactivityTimer = null;
+        let foodIngredients = [];
 
         // FETCH DATA LIVE FROM SUPABASE CLOUD
         async function fetchCloudData(showPrompt = false) {
             if (!supabase) {
-                console.warn('Supabase publishable key not set. Using local state.');
+                console.warn('Supabase not connected. Using local state.');
                 return;
             }
 
@@ -931,43 +935,59 @@
             loadDocumentsFromStorage();
         });
 
+        // ROBUST AUTHENTICATION CONTROLLER
         async function handleLogin(event) {
             event.preventDefault();
             const username = document.getElementById('userIdInput').value.trim().toLowerCase();
             const password = document.getElementById('userPasswordInput').value;
+            const errEl = document.getElementById('loginError');
+            if (errEl) errEl.innerText = '';
 
+            // 1. Try Supabase Cloud Auth
             if (supabase) {
-                const { data: user } = await supabase
-                    .from('app_users')
-                    .select('*')
-                    .eq('id', username)
-                    .eq('pass', password)
-                    .single();
+                try {
+                    const { data: user } = await supabase
+                        .from('app_users')
+                        .select('*')
+                        .eq('id', username)
+                        .eq('pass', password)
+                        .maybeSingle();
 
-                if (user) {
-                    currentUser = { username: user.id, fullName: user.name, role: user.role };
-                    document.getElementById('loginOverlay').style.display = 'none';
-                    document.getElementById('appContainer').style.display = 'flex';
-                    document.getElementById('currentUsername').innerText = currentUser.fullName;
-                    document.getElementById('currentUserRole').innerText = currentUser.role;
-                    resetInactivityTimer();
-                    showDashboard();
-                    return;
+                    if (user) {
+                        loginSuccess(user.id, user.name, user.role);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Supabase auth fallback:', e);
                 }
             }
 
-            const foundUser = appUsers.find(u => u.id === username && u.pass === password);
+            // 2. Try Memory/Local Storage User List
+            const foundUser = (appUsers && appUsers.length ? appUsers : DEFAULT_USERS)
+                .find(u => u.id.toLowerCase() === username && u.pass === password);
+
             if (foundUser) {
-                currentUser = { username: foundUser.id, fullName: foundUser.name, role: foundUser.role };
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('appContainer').style.display = 'flex';
-                document.getElementById('currentUsername').innerText = currentUser.fullName;
-                document.getElementById('currentUserRole').innerText = currentUser.role;
-                resetInactivityTimer();
-                showDashboard();
-            } else {
-                document.getElementById('loginError').innerText = 'Invalid User ID or Password.';
+                loginSuccess(foundUser.id, foundUser.name, foundUser.role);
+                return;
             }
+
+            // 3. Guaranteed Root Admin Fallback
+            if (username === 'admin' && password === 'admin123') {
+                loginSuccess('admin', 'Vasudevan (Admin)', 'ADMIN');
+                return;
+            }
+
+            if (errEl) errEl.innerText = 'Invalid User ID or Password.';
+        }
+
+        function loginSuccess(id, name, role) {
+            currentUser = { username: id, fullName: name, role: role };
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'flex';
+            document.getElementById('currentUsername').innerText = currentUser.fullName;
+            document.getElementById('currentUserRole').innerText = currentUser.role;
+            resetInactivityTimer();
+            showDashboard();
         }
 
         function logout() {
@@ -1004,6 +1024,7 @@
                 document.getElementById(targetId).style.display = 'block';
                 if (secKey === 'bcgMatrix') renderBcgMatrix();
                 if (secKey === 'itemwiseReport') renderItemwiseReport();
+                if (secKey === 'food') updateFoodIngredientDropdown();
             }
         }
 
@@ -1137,7 +1158,18 @@
             renderItemMasterTable();
             populateSubRecipeDropdowns();
             updateRecipeIngredientDropdown();
+            cancelItemEdit();
             alert(`Item '${name}' saved!`);
+        }
+
+        function cancelItemEdit() {
+            document.getElementById('addCode').value = '';
+            document.getElementById('addName').value = '';
+            document.getElementById('addPurUom').value = '';
+            document.getElementById('addRecUom').value = '';
+            document.getElementById('addConv').value = '';
+            document.getElementById('addRate').value = '';
+            document.getElementById('addYield').value = '';
         }
 
         function renderItemMasterTable() {
@@ -1372,6 +1404,85 @@
             });
         }
 
+        // FOOD CALCULATOR
+        function updateFoodIngredientDropdown() {
+            const type = document.getElementById('foodIngType')?.value || 'RAW';
+            const filter = (document.getElementById('foodFilterCat') || {}).value || 'ALL';
+            const select = document.getElementById('foodIngSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            if (type === 'RAW') {
+                itemMasterStore.forEach(i => {
+                    if (filter !== 'ALL' && i.cat !== filter) return;
+                    const effRate = i.yieldPct > 0 ? i.rate / (i.yieldPct / 100) : i.rate;
+                    const unitRate = i.conv > 0 ? effRate / i.conv : effRate;
+                    select.innerHTML += `<option value="${i.code}" data-unitcost="${unitRate}" data-uom="${i.recUom}">${i.name} (₹${unitRate.toFixed(4)}/${i.recUom})</option>`;
+                });
+            } else {
+                subRecipeStore.forEach(s => {
+                    select.innerHTML += `<option value="${s.code}" data-unitcost="${s.unitCostGrams}" data-uom="Grams">${s.name} (₹${s.unitCostGrams.toFixed(4)}/Gram)</option>`;
+                });
+            }
+        }
+
+        function addFoodIngredient() {
+            const select = document.getElementById('foodIngSelect');
+            const qty = parseFloat(document.getElementById('foodIngQty').value) || 0;
+            const uom = (document.getElementById('foodIngUom').value || 'Grams').trim();
+            if (!select || !select.value || qty <= 0) return alert('Select an ingredient and enter valid quantity.');
+            const opt = select.options[select.selectedIndex];
+            const unitCost = parseFloat(opt.getAttribute('data-unitcost')) || 0;
+            const name = opt.text.split(' (')[0];
+            foodIngredients.push({ name, type: document.getElementById('foodIngType').value, qty, uom, unitCost, lineCost: qty * unitCost });
+            document.getElementById('foodIngQty').value = '';
+            renderFoodIngredientsTable();
+            calculateFoodRecipe();
+        }
+
+        function removeFoodIngredient(idx) {
+            foodIngredients.splice(idx, 1);
+            renderFoodIngredientsTable();
+            calculateFoodRecipe();
+        }
+
+        function renderFoodIngredientsTable() {
+            const tbody = document.getElementById('foodIngredientsTbody');
+            if (!tbody) return;
+            if (foodIngredients.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No ingredients added yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = foodIngredients.map((ing, idx) => `
+                <tr>
+                    <td>${idx+1}</td>
+                    <td><strong>${ing.name}</strong></td>
+                    <td><span class="badge">${ing.type}</span></td>
+                    <td>${ing.qty}</td><td>${ing.uom}</td>
+                    <td>₹ ${ing.unitCost.toFixed(4)}</td>
+                    <td><strong>₹ ${ing.lineCost.toFixed(2)}</strong></td>
+                    <td><button class="btn-action btn-danger" onclick="removeFoodIngredient(${idx})">Remove</button></td>
+                </tr>`).join('');
+        }
+
+        function calculateFoodRecipe() {
+            const sellingPrice = parseFloat(document.getElementById('foodSellingPrice')?.value) || 0;
+            const targetPct = parseFloat(document.getElementById('foodTargetCostPct')?.value) || 28;
+            const portions = parseFloat(document.getElementById('foodPortions')?.value) || 1;
+            const totalCost = foodIngredients.reduce((s, i) => s + i.lineCost, 0);
+            const costPerPortion = portions > 0 ? totalCost / portions : totalCost;
+            const actualPct = sellingPrice > 0 ? (costPerPortion / sellingPrice) * 100 : 0;
+            const targetCostVal = sellingPrice * (targetPct / 100);
+            const variance = targetCostVal - costPerPortion;
+
+            document.getElementById('foodTotalCost').innerText = `₹ ${totalCost.toFixed(2)}`;
+            document.getElementById('foodCostPerPortion').innerText = `₹ ${costPerPortion.toFixed(2)}`;
+            document.getElementById('foodActualPct').innerText = `${actualPct.toFixed(1)}%`;
+            document.getElementById('foodTargetCostVal').innerText = `₹ ${targetCostVal.toFixed(2)}`;
+            document.getElementById('foodVarianceMsg').innerHTML = variance >= 0
+                ? `Variance: <span class="status-ok">₹ ${variance.toFixed(2)} under target (Good)</span>`
+                : `Variance: <span class="status-warn">₹ ${Math.abs(variance).toFixed(2)} over target</span>`;
+        }
+
         // BCG & REPORTS
         function renderBcgMatrix() {
             const tbody = document.getElementById('bcgMatrixTbody');
@@ -1521,4 +1632,3 @@
     </script>
 </body>
 </html>
-
