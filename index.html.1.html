@@ -779,10 +779,10 @@
         // ==========================================
         // 1. SUPABASE CLIENT CONFIGURATION
         // ==========================================
-        const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabase.co';
+        const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabaseClient.co';
         const SUPABASE_KEY = 'sb_publishable_LxV89PjPnX55ZEIT47p5rQ_PHDDOLZp';
         const supabase = (SUPABASE_KEY.length > 30 && SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY' && window.supabase) 
-            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
+            ? window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY) 
             : null;
 
         // DEFAULT FALLBACK DATASETS
@@ -847,13 +847,13 @@
             }
 
             try {
-                const { data: items } = await supabase.from('items_master').select('*').order('code');
+                const { data: items } = await supabaseClient.from('items_master').select('*').order('code');
                 if (items && items.length > 0) itemMasterStore = items;
 
-                const { data: subs } = await supabase.from('sub_recipes').select('*').order('code');
+                const { data: subs } = await supabaseClient.from('sub_recipes').select('*').order('code');
                 if (subs && subs.length > 0) subRecipeStore = subs;
 
-                const { data: pos } = await supabase.from('pos_menu_master').select('*').order('code');
+                const { data: pos } = await supabaseClient.from('pos_menu_master').select('*').order('code');
                 if (pos && pos.length > 0) {
                     const grouped = {};
                     pos.forEach(p => {
@@ -872,7 +872,7 @@
                     posMenuData = grouped;
                 }
 
-                const { data: users } = await supabase.from('app_users').select('*');
+                const { data: users } = await supabaseClient.from('app_users').select('*');
                 if (users && users.length > 0) appUsers = users;
 
                 renderItemMasterTable();
@@ -1057,7 +1057,7 @@
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     const filePath = `documents/${Date.now()}_${file.name}`;
-                    const { error } = await supabase.storage.from('recipe_documents').upload(filePath, file);
+                    const { error } = await supabaseClient.storage.from('recipe_documents').upload(filePath, file);
                     if (error) console.error('Cloud upload error:', error);
                 }
                 await fetchCloudDocuments();
@@ -1070,7 +1070,7 @@
 
         async function fetchCloudDocuments() {
             if (!supabase) return;
-            const { data: files } = await supabase.storage.from('recipe_documents').list('documents');
+            const { data: files } = await supabaseClient.storage.from('recipe_documents').list('documents');
             const container = document.getElementById('uploadedDocsList');
             if (!container) return;
 
@@ -1081,7 +1081,7 @@
 
             container.innerHTML = '';
             files.forEach(f => {
-                const { data } = supabase.storage.from('recipe_documents').getPublicUrl(`documents/${f.name}`);
+                const { data } = supabaseClient.storage.from('recipe_documents').getPublicUrl(`documents/${f.name}`);
                 container.innerHTML += `
                     <div class="doc-item">
                         <div>📄 <strong>${f.name}</strong></div>
@@ -1149,7 +1149,7 @@
             else itemMasterStore.push(itemObj);
 
             if (supabase) {
-                await supabase.from('items_master').upsert({
+                await supabaseClient.from('items_master').upsert({
                     code, name, category: cat, purchase_uom: purUom, recipe_uom: recUom, conversion_factor: conv, rate, yield_pct: yieldPct
                 });
             }
@@ -1201,7 +1201,7 @@
         async function deleteItemMaster(index) {
             const item = itemMasterStore[index];
             if (confirm(`Delete '${item.name}'?`)) {
-                if (supabase) await supabase.from('items_master').delete().eq('code', item.code);
+                if (supabase) await supabaseClient.from('items_master').delete().eq('code', item.code);
                 itemMasterStore.splice(index, 1);
                 saveAllToStorage(false);
                 renderItemMasterTable();
@@ -1227,7 +1227,7 @@
             subRecipeStore.push(subObj);
 
             if (supabase) {
-                await supabase.from('sub_recipes').upsert({
+                await supabaseClient.from('sub_recipes').upsert({
                     code, name: prepName, source: subObj.source, raw_qty: rawQty, yield_qty: yieldQty, yield_pct: yieldPct, cost, unit_cost_grams: unitCostGrams
                 });
             }
@@ -1270,7 +1270,7 @@
             posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
 
             if (supabase) {
-                await supabase.from('pos_menu_master').upsert({
+                await supabaseClient.from('pos_menu_master').upsert({
                     code, name, category: cat, price, sold: 0, cost: 0, pct: '0%', recipe_list: []
                 });
             }
@@ -1366,7 +1366,7 @@
             targetMenu.pct = targetMenu.price > 0 ? ((targetMenu.cost / targetMenu.price) * 100).toFixed(1) + '%' : '0%';
 
             if (supabase) {
-                await supabase.from('pos_menu_master').update({
+                await supabaseClient.from('pos_menu_master').update({
                     recipe_list: targetMenu.recipeList,
                     cost: targetMenu.cost,
                     pct: targetMenu.pct
