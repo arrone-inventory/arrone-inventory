@@ -779,10 +779,10 @@
         // ==========================================
         // 1. SUPABASE CLIENT CONFIGURATION
         // ==========================================
-        const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabaseClient.co';
+        const SUPABASE_URL = 'https://evyrvvvcijugoympejfq.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_LxV89PjPnX55ZEIT47p5rQ_PHDDOLZp';
-        const supabase = (SUPABASE_KEY.length > 30 && SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY' && window.supabase) 
-            ? window.supabaseClient.createClient(SUPABASE_URL, SUPABASE_KEY) 
+        const supabaseClient = (SUPABASE_KEY.length > 30 && SUPABASE_KEY !== 'YOUR_SUPABASE_PUBLISHABLE_KEY' && window.supabase) 
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) 
             : null;
 
         // DEFAULT FALLBACK DATASETS
@@ -841,7 +841,7 @@
 
         // FETCH DATA LIVE FROM SUPABASE CLOUD
         async function fetchCloudData(showPrompt = false) {
-            if (!supabase) {
+            if (!supabaseClient) {
                 console.warn('Supabase not connected. Using local state.');
                 return;
             }
@@ -944,9 +944,9 @@
             if (errEl) errEl.innerText = '';
 
             // 1. Try Supabase Cloud Auth
-            if (supabase) {
+            if (supabaseClient) {
                 try {
-                    const { data: user } = await supabase
+                    const { data: user } = await supabaseClient
                         .from('app_users')
                         .select('*')
                         .eq('id', username)
@@ -1053,7 +1053,7 @@
             const files = event.target.files;
             if (!files || files.length === 0) return;
 
-            if (supabase) {
+            if (supabaseClient) {
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
                     const filePath = `documents/${Date.now()}_${file.name}`;
@@ -1069,7 +1069,7 @@
         }
 
         async function fetchCloudDocuments() {
-            if (!supabase) return;
+            if (!supabaseClient) return;
             const { data: files } = await supabaseClient.storage.from('recipe_documents').list('documents');
             const container = document.getElementById('uploadedDocsList');
             if (!container) return;
@@ -1112,7 +1112,7 @@
         }
 
         function loadDocumentsFromStorage() {
-            if (supabase) { fetchCloudDocuments(); return; }
+            if (supabaseClient) { fetchCloudDocuments(); return; }
             const container = document.getElementById('uploadedDocsList');
             if (!container) return;
             if (attachedDocs.length === 0) {
@@ -1148,7 +1148,7 @@
             if (existingIdx >= 0) itemMasterStore[existingIdx] = itemObj;
             else itemMasterStore.push(itemObj);
 
-            if (supabase) {
+            if (supabaseClient) {
                 await supabaseClient.from('items_master').upsert({
                     code, name, category: cat, purchase_uom: purUom, recipe_uom: recUom, conversion_factor: conv, rate, yield_pct: yieldPct
                 });
@@ -1201,7 +1201,7 @@
         async function deleteItemMaster(index) {
             const item = itemMasterStore[index];
             if (confirm(`Delete '${item.name}'?`)) {
-                if (supabase) await supabaseClient.from('items_master').delete().eq('code', item.code);
+                if (supabaseClient) await supabaseClient.from('items_master').delete().eq('code', item.code);
                 itemMasterStore.splice(index, 1);
                 saveAllToStorage(false);
                 renderItemMasterTable();
@@ -1226,7 +1226,7 @@
             const subObj = { code, name: prepName, source: sourceItem ? sourceItem.name : rawCode, rawQty, yieldQty, yieldPct, cost, unitCostGrams };
             subRecipeStore.push(subObj);
 
-            if (supabase) {
+            if (supabaseClient) {
                 await supabaseClient.from('sub_recipes').upsert({
                     code, name: prepName, source: subObj.source, raw_qty: rawQty, yield_qty: yieldQty, yield_pct: yieldPct, cost, unit_cost_grams: unitCostGrams
                 });
@@ -1269,7 +1269,7 @@
             if (!posMenuData[cat]) posMenuData[cat] = [];
             posMenuData[cat].push({ code, name, cat, price, sold: 0, cost: 0.0, pct: '0%', recipeList: [] });
 
-            if (supabase) {
+            if (supabaseClient) {
                 await supabaseClient.from('pos_menu_master').upsert({
                     code, name, category: cat, price, sold: 0, cost: 0, pct: '0%', recipe_list: []
                 });
@@ -1365,7 +1365,7 @@
             targetMenu.cost = targetMenu.recipeList.reduce((sum, ing) => sum + ing.cost, 0);
             targetMenu.pct = targetMenu.price > 0 ? ((targetMenu.cost / targetMenu.price) * 100).toFixed(1) + '%' : '0%';
 
-            if (supabase) {
+            if (supabaseClient) {
                 await supabaseClient.from('pos_menu_master').update({
                     recipe_list: targetMenu.recipeList,
                     cost: targetMenu.cost,
